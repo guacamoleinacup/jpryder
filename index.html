@@ -2014,60 +2014,48 @@ function renderGallery() {
 
 function loadGalleryYear(yr) {
   const grid = document.getElementById('gallery-grid-' + yr);
-  const loaded = [];
-  let probing = 0;
-  let finished = 0;
 
-  function probe(n) {
+  // Try a single variant for each slot in parallel, resolve first match
+  function tryVariants(n) {
     const padded = String(n).padStart(2, '0');
-    // All filename variants to try in order
     const variants = [
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpeg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpeg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpeg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpeg`,
-      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpeg`,
-      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpeg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpg`,
     ];
-    let vi = 0;
-    const img = new Image();
-    probing++;
-    img.onload = () => {
-      loaded.push({n, url: img.src});
-      probing--;
-      finished++;
-      renderLoaded();
-      if (n < MAX_GALLERY_PROBE) probe(n + 1);
-    };
-    img.onerror = () => {
-      vi++;
-      if (vi < variants.length) {
-        img.src = variants[vi];
-      } else {
-        probing--;
-        if (probing === 0 && loaded.length === 0) {
-          grid.innerHTML = `<div class="gallery-item"><div class="gallery-placeholder"><span>📷</span><p>Photos coming soon</p></div></div>`.repeat(3);
-        } else if (probing === 0) {
-          renderLoaded();
-        }
-      }
-    };
-    img.src = variants[0];
+    return new Promise(resolve => {
+      let vi = 0;
+      const img = new Image();
+      img.onload = () => resolve(img.src);
+      img.onerror = () => {
+        vi++;
+        if (vi < variants.length) img.src = variants[vi];
+        else resolve(null);
+      };
+      img.src = variants[0];
+    });
   }
 
-  function renderLoaded() {
-    if (loaded.length === 0) return;
-    const sorted = loaded.sort((a,b) => a.n - b.n);
-    const urls = sorted.map(i => i.url);
-    // Store urls on the year section for lightbox navigation
+  // Probe all slots in parallel up to MAX, filter nulls
+  const probes = Array.from({length: MAX_GALLERY_PROBE}, (_, i) => tryVariants(i + 1));
+  Promise.all(probes).then(results => {
+    const urls = results.filter(Boolean);
+    if (urls.length === 0) {
+      grid.innerHTML = `<div class="gallery-item"><div class="gallery-placeholder"><span>📷</span><p>Photos coming soon</p></div></div>`.repeat(3);
+      return;
+    }
+
     const section = document.getElementById('gallery-yr-' + yr);
     section._photoUrls = urls;
 
     const items = urls.map((url, idx) =>
       `<div class="gallery-item" onclick="openLightbox('${yr}',${idx})">
-        <img src="${url}" alt="photo" style="transition:opacity 0.3s"
+        <img src="${url}" alt="photo" style="opacity:0;transition:opacity 0.3s"
           onload="this.style.opacity=1"
           onerror="this.style.display='none';this.parentElement.style.cursor='default';this.parentElement.onclick=null;this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>Unavailable</p></div>'">
       </div>`
@@ -2077,7 +2065,6 @@ function loadGalleryYear(yr) {
     grid.className = 'gallery-grid' + (needsCollapse ? ' collapsed' : '');
     grid.innerHTML = items;
 
-    // Add expand button if needed
     const existing = document.getElementById('expand-btn-' + yr);
     if (existing) existing.remove();
     if (needsCollapse) {
@@ -2094,9 +2081,7 @@ function loadGalleryYear(yr) {
       };
       grid.parentElement.appendChild(btn);
     }
-  }
-
-  probe(1);
+  });
 }
 
 // ── LIGHTBOX ──
