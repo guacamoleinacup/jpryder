@@ -825,17 +825,25 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
-  /* Header */
-  .header-inner { padding: 0 10px; gap: 6px; }
+  /* Header — two row layout on mobile */
+  .header-inner {
+    flex-wrap: wrap; padding: 0 12px; gap: 0;
+  }
+  .logo-wrap { padding: 10px 0; gap: 8px; flex: 1; }
   .site-title { font-size: 1.1rem; }
   .logo-wrap img { height: 36px; width: 36px; }
-  .logo-wrap { gap: 8px; }
-  nav { display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-  nav::-webkit-scrollbar { display: none; }
-  nav button { padding: 16px 10px; font-size: 0.58rem; letter-spacing: 0.1em; white-space: nowrap; flex-shrink: 0; }
+  nav {
+    order: 3; width: 100%;
+    display: flex; gap: 0;
+    border-top: 1px solid rgba(201,168,76,0.15);
+  }
+  nav button {
+    flex: 1; padding: 12px 4px; font-size: 0.58rem;
+    letter-spacing: 0.06em; white-space: nowrap;
+  }
   .live-indicator { gap: 0; }
   #live-label { display: none; }
-  .admin-btn { font-size: 0.58rem; padding: 6px 9px; }
+  .admin-btn { font-size: 0.58rem; padding: 6px 10px; align-self: center; }
 
   /* Hero */
   .hero { padding: 36px 16px 32px; }
@@ -1215,7 +1223,7 @@ function showSection(id, btn) {
   document.getElementById('sec-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'history') renderHistory();
-  if (id === 'nominations') renderNominations();
+  if (id === 'nominations') { _nomState = null; renderNominations(); }
   if (id === 'gallery') renderGallery();
 }
 
