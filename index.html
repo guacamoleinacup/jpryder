@@ -804,7 +804,17 @@ async function loadData() {
       headers: { 'X-Master-Key': API_KEY }
     });
     const json = await res.json();
-    if (json.record) DB = Object.assign({}, DEFAULT_DATA, json.record);
+    if (json.record) {
+      // Deep merge: start from defaults, overlay only known fields from bin
+      const r = json.record;
+      if (r.seriesWins) DB.seriesWins = r.seriesWins;
+      if (r.nextEvent) DB.nextEvent = r.nextEvent;
+      if (r.years) {
+        Object.keys(r.years).forEach(yr => {
+          if (DB.years[yr]) DB.years[yr] = Object.assign({}, DB.years[yr], r.years[yr]);
+        });
+      }
+    }
     setLiveStatus(true);
   } catch(e) {
     console.warn('JSONBin load failed, using defaults');
