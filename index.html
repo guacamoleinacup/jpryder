@@ -406,6 +406,24 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
   font-family: 'Montserrat', sans-serif; font-size: 0.75rem;
   font-weight: 600; cursor: pointer;
 }
+.live-indicator {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: rgba(248,245,238,0.45);
+  padding: 0 4px;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4caf50;
+  box-shadow: 0 0 0 0 rgba(76,175,80,0.6);
+  animation: pulse-dot 2s infinite;
+}
+.live-dot.offline { background: #777; box-shadow: none; animation: none; }
+@keyframes pulse-dot {
+  0%   { box-shadow: 0 0 0 0 rgba(76,175,80,0.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(76,175,80,0); }
+  100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
+}
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
   background: var(--forest-deep); color: var(--cream);
@@ -488,7 +506,13 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <button onclick="showSection('players',this)">Players</button>
       <button onclick="showSection('gallery',this)">Gallery</button>
     </nav>
-    <button class="admin-btn" onclick="openAdmin()">Admin</button>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="live-indicator" id="live-indicator">
+        <div class="live-dot offline" id="live-dot"></div>
+        <span id="live-label">—</span>
+      </div>
+      <button class="admin-btn" onclick="openAdmin()">Admin</button>
+    </div>
   </div>
 </header>
 
@@ -626,7 +650,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 <script>
 // ── CONFIG ── REPLACE WITH YOUR JSONBIN API KEY ──
 const BIN_ID = '69eb8eb236566621a8e9a97c';
-const API_KEY = 'YOUR_JSONBIN_API_KEY_HERE'; // ← paste your key here
+const API_KEY = '$2a$10$bi8u/5Db8qyxEsv/QYyvuu03trS2sjASrsf0TXa.m3CIfARihdZdS';
 const ADMIN_PASS = 'jpbod123!';
 const GITHUB_BASE = 'https://raw.githubusercontent.com/guacamoleinacup/jpryder/main/images/';
 
@@ -720,6 +744,7 @@ function showSection(id, btn) {
 // ── LOAD DATA ──
 async function loadData() {
   if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') {
+    setLiveStatus(false);
     renderHome();
     return;
   }
@@ -729,8 +754,24 @@ async function loadData() {
     });
     const json = await res.json();
     if (json.record) DB = Object.assign({}, DEFAULT_DATA, json.record);
-  } catch(e) { console.warn('JSONBin load failed, using defaults'); }
+    setLiveStatus(true);
+  } catch(e) {
+    console.warn('JSONBin load failed, using defaults');
+    setLiveStatus(false);
+  }
   renderHome();
+}
+
+function setLiveStatus(online) {
+  const dot = document.getElementById('live-dot');
+  const label = document.getElementById('live-label');
+  if (online) {
+    dot.classList.remove('offline');
+    label.textContent = 'Live';
+  } else {
+    dot.classList.add('offline');
+    label.textContent = 'Offline';
+  }
 }
 
 async function saveData() {
