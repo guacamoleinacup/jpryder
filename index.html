@@ -943,27 +943,33 @@ function loadGalleryYear(yr) {
   let finished = 0;
 
   function probe(n) {
-    const num = String(n).padStart(2, '0');
-    const url = `${GITHUB_BASE}gallery/${yr}/${yr}-${num}.jpg`;
+    const padded = String(n).padStart(2, '0');
+    // Try zero-padded first (2023-01.jpg), fall back to non-padded (2023-1.jpg)
+    const urlPadded = `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpg`;
+    const urlPlain  = `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpg`;
     const img = new Image();
     probing++;
     img.onload = () => {
-      loaded.push({n, url});
+      loaded.push({n, url: img.src});
       probing--;
       finished++;
       renderLoaded();
       if (n < MAX_GALLERY_PROBE) probe(n + 1);
     };
     img.onerror = () => {
-      probing--;
-      // Stop probing on first miss
-      if (probing === 0 && loaded.length === 0) {
-        grid.innerHTML = `<div class="gallery-item"><div class="gallery-placeholder"><span>📷</span><p>Photos coming soon</p></div></div>`.repeat(3);
-      } else if (probing === 0) {
-        renderLoaded();
+      if (img.src === urlPadded) {
+        // Try non-padded fallback
+        img.src = urlPlain;
+      } else {
+        probing--;
+        if (probing === 0 && loaded.length === 0) {
+          grid.innerHTML = `<div class="gallery-item"><div class="gallery-placeholder"><span>📷</span><p>Photos coming soon</p></div></div>`.repeat(3);
+        } else if (probing === 0) {
+          renderLoaded();
+        }
       }
     };
-    img.src = url;
+    img.src = urlPadded;
   }
 
   function renderLoaded() {
