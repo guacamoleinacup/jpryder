@@ -1823,7 +1823,7 @@ function renderNominations() {
   const s = _nomState;
 
   const totalExpected = Math.min(s.jakePlayers.length, s.travisPlayers.length);
-  const allPaired = s.pairings.length >= Math.ceil(totalExpected / s.playersPerSide) && s.jakeAvail.length === 0;
+  const allPaired = totalExpected > 0 && s.pairings.length >= Math.ceil(totalExpected / s.playersPerSide) && s.jakeAvail.length === 0;
 
   // Round selector tabs
   const roundTabs = (d.rounds || []).map((r, i) => `
