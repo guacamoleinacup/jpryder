@@ -312,6 +312,55 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
   font-size: 1rem; color: var(--border); font-weight: 300;
 }
 
+/* ── PLAYER MODAL ── */
+.player-modal-photo {
+  width: 100px; height: 100px; border-radius: 50%; overflow: hidden;
+  background: linear-gradient(135deg, var(--forest-deep), var(--forest-light));
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; border: 3px solid var(--gold);
+  font-size: 2.5rem;
+}
+.player-modal-photo img { width: 100%; height: 100%; object-fit: cover; }
+.player-modal-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 700; color: var(--forest-deep);
+  text-align: center; margin-bottom: 4px;
+}
+.player-modal-appearances {
+  text-align: center; font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-light); margin-bottom: 20px;
+}
+.player-modal-divider {
+  width: 40px; height: 1px; background: var(--gold);
+  margin: 0 auto 20px;
+}
+.player-modal-year-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--cream-dark);
+  font-size: 0.8rem;
+}
+.player-modal-year-row:last-child { border-bottom: none; }
+.player-modal-yr {
+  font-weight: 700; color: var(--forest-deep); min-width: 40px;
+}
+.player-modal-team { color: var(--text-mid); flex: 1; padding: 0 12px; }
+.player-modal-result {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+  padding: 2px 8px; border-radius: 2px; text-transform: uppercase;
+}
+.result-win { background: rgba(45,74,62,0.12); color: var(--jake); }
+.result-loss { background: rgba(139,46,46,0.1); color: var(--travis); }
+.player-name-btn {
+  background: none; border: none; padding: 0;
+  font-family: inherit; font-size: inherit; color: inherit;
+  cursor: pointer; text-align: left;
+  transition: color 0.15s;
+  text-decoration: underline; text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+.player-name-btn:hover { color: var(--forest-deep); font-weight: 600; }
+
 /* ── GALLERY ── */
 .gallery-year-section { margin-bottom: 48px; }
 .gallery-year-title {
@@ -503,7 +552,6 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
     <nav>
       <button class="active" onclick="showSection('home',this)">Home</button>
       <button onclick="showSection('history',this)">History</button>
-      <button onclick="showSection('players',this)">Players</button>
       <button onclick="showSection('gallery',this)">Gallery</button>
     </nav>
     <div style="display:flex;align-items:center;gap:12px">
@@ -561,19 +609,6 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
   </div>
 </div>
 
-<!-- PLAYERS -->
-<div id="sec-players" class="section">
-  <div class="page-wrap">
-    <div class="section-header">
-      <h2>All-Time Roster</h2>
-      <div class="underline"></div>
-    </div>
-    <div class="players-grid" id="players-grid">
-      <div class="loading">Loading players...</div>
-    </div>
-  </div>
-</div>
-
 <!-- GALLERY -->
 <div id="sec-gallery" class="section">
   <div class="page-wrap">
@@ -582,6 +617,23 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <div class="underline"></div>
     </div>
     <div id="gallery-content"><div class="loading">Loading gallery...</div></div>
+  </div>
+</div>
+
+<!-- PLAYER CARD MODAL -->
+<div class="modal-overlay" id="modal-player">
+  <div class="modal" style="max-width:380px">
+    <div class="player-modal-photo">
+      <img id="pmodal-photo" src="" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <span id="pmodal-placeholder">⛳</span>
+    </div>
+    <div class="player-modal-name" id="pmodal-name"></div>
+    <div class="player-modal-appearances" id="pmodal-appearances"></div>
+    <div class="player-modal-divider"></div>
+    <div id="pmodal-years"></div>
+    <div class="modal-btns" style="margin-top:20px">
+      <button class="btn-secondary" onclick="closeModal('modal-player')">Close</button>
+    </div>
   </div>
 </div>
 
@@ -737,7 +789,6 @@ function showSection(id, btn) {
   document.getElementById('sec-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'history') renderHistory();
-  if (id === 'players') renderPlayers();
   if (id === 'gallery') renderGallery();
 }
 
@@ -825,10 +876,10 @@ function buildYearCard(yr) {
     </div>` : '';
 
   const jakeList = d.jakePlayers.map(p =>
-    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
+    `<li class="player-item"><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
   ).join('');
   const travisList = d.travisPlayers.map(p =>
-    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
+    `<li class="player-item"><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
   ).join('');
 
   return `
@@ -868,44 +919,41 @@ function buildYearCard(yr) {
   </div>`;
 }
 
-// ── RENDER PLAYERS ──
-function renderPlayers() {
-  const allPlayers = {};
+// ── PLAYER MODAL ──
+function openPlayerModal(name) {
+  // Build full history for this player across all years
+  const history = [];
   ['2023','2024','2025'].forEach(yr => {
     const d = DB.years[yr];
     if (!d) return;
-    d.jakePlayers.forEach(p => {
-      if (!allPlayers[p.name]) allPlayers[p.name] = [];
-      allPlayers[p.name].push({yr, team: d.jakeTeam, captain: 'jake'});
-    });
-    d.travisPlayers.forEach(p => {
-      if (!allPlayers[p.name]) allPlayers[p.name] = [];
-      allPlayers[p.name].push({yr, team: d.travisTeam, captain: 'travis'});
-    });
+    const onJake = d.jakePlayers.find(p => p.name === name);
+    const onTravis = d.travisPlayers.find(p => p.name === name);
+    if (onJake) history.push({ yr, team: d.jakeTeam, captain: 'jake', won: d.jakeWon });
+    if (onTravis) history.push({ yr, team: d.travisTeam, captain: 'travis', won: !d.jakeWon });
   });
 
-  const sorted = Object.keys(allPlayers).sort();
-  const grid = document.getElementById('players-grid');
-  grid.innerHTML = sorted.map(name => {
-    const entries = allPlayers[name];
-    const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    const photoUrl = `${GITHUB_BASE}players/${slug}.jpg`;
-    const yearTags = entries.map(e =>
-      `<span class="player-year-tag tag-${e.captain}">${e.yr} · ${e.team}</span>`
-    ).join('');
-    return `
-    <div class="player-card">
-      <div class="player-photo">
-        <img src="${photoUrl}" alt="${name}"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="player-photo-placeholder" style="display:none">⛳</div>
-      </div>
-      <div class="player-card-info">
-        <div class="player-card-name">${name}</div>
-        <div class="player-card-years">${yearTags}</div>
-      </div>
-    </div>`;
-  }).join('');
+  const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const photoUrl = `${GITHUB_BASE}players/${slug}.jpg`;
+
+  const photoEl = document.getElementById('pmodal-photo');
+  const placeholderEl = document.getElementById('pmodal-placeholder');
+  photoEl.style.display = 'block';
+  placeholderEl.style.display = 'none';
+  photoEl.src = photoUrl;
+  photoEl.onerror = () => { photoEl.style.display='none'; placeholderEl.style.display='block'; };
+
+  document.getElementById('pmodal-name').textContent = name;
+  document.getElementById('pmodal-appearances').textContent =
+    `${history.length} appearance${history.length !== 1 ? 's' : ''}`;
+
+  document.getElementById('pmodal-years').innerHTML = history.map(h => `
+    <div class="player-modal-year-row">
+      <span class="player-modal-yr">${h.yr}</span>
+      <span class="player-modal-team">${h.team}</span>
+      <span class="player-modal-result ${h.won ? 'result-win' : 'result-loss'}">${h.won ? 'Won' : 'Lost'}</span>
+    </div>`).join('');
+
+  document.getElementById('modal-player').classList.add('open');
 }
 
 // ── RENDER GALLERY ──
