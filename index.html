@@ -1341,8 +1341,10 @@ function buildYearCard(yr) {
 
       return `<div style="margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);gap:8px">
-          <span style="font-size:0.8rem;font-weight:700;color:var(--forest-deep);white-space:nowrap">${r.name}</span>
-          <span style="font-size:0.62rem;color:var(--text-light);letter-spacing:0.1em;text-transform:uppercase;text-align:center;flex:1">${r.format}</span>
+          <div>
+            <div style="font-size:0.8rem;font-weight:700;color:var(--forest-deep)">${r.name}</div>
+            <div style="font-size:0.6rem;color:var(--text-light);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px">${r.format}</div>
+          </div>
           ${hasScores ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-mid);white-space:nowrap">${jr} – ${tr}</span>` : '<span style="font-size:0.65rem;color:var(--text-light);white-space:nowrap">Upcoming</span>'}
         </div>
         ${matchupRows}
