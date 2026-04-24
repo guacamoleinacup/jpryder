@@ -898,7 +898,26 @@ function showSection(id, btn) {
 }
 
 // ── LOAD DATA ──
+const CACHE_KEY = 'jpryder_db';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 async function loadData() {
+  // Load from cache immediately for instant render
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached);
+      applyRecord(data);
+      renderHome();
+      // If cache is fresh, skip network call
+      if (Date.now() - ts < CACHE_TTL) {
+        setLiveStatus(true);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fetch fresh data in background
   if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') {
     setLiveStatus(false);
     renderHome();
@@ -910,22 +929,25 @@ async function loadData() {
     });
     const json = await res.json();
     if (json.record) {
-      // Deep merge: start from defaults, overlay only known fields from bin
-      const r = json.record;
-      if (r.seriesWins) DB.seriesWins = r.seriesWins;
-      if (r.nextEvent) DB.nextEvent = r.nextEvent;
-      if (r.years) {
-        Object.keys(r.years).forEach(yr => {
-          if (DB.years[yr]) DB.years[yr] = Object.assign({}, DB.years[yr], r.years[yr]);
-        });
-      }
+      applyRecord(json.record);
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.record, ts: Date.now() }));
     }
     setLiveStatus(true);
   } catch(e) {
-    console.warn('JSONBin load failed, using defaults');
+    console.warn('JSONBin load failed, using cache/defaults');
     setLiveStatus(false);
   }
   renderHome();
+}
+
+function applyRecord(r) {
+  if (r.seriesWins) DB.seriesWins = r.seriesWins;
+  if (r.nextEvent) DB.nextEvent = r.nextEvent;
+  if (r.years) {
+    Object.keys(r.years).forEach(yr => {
+      if (DB.years[yr]) DB.years[yr] = Object.assign({}, DB.years[yr], r.years[yr]);
+    });
+  }
 }
 
 function setLiveStatus(online) {
@@ -1055,8 +1077,15 @@ function openPlayerModal(name) {
   const placeholderEl = document.getElementById('pmodal-placeholder');
   photoEl.style.display = 'block';
   placeholderEl.style.display = 'none';
-  photoEl.src = photoUrl;
-  photoEl.onerror = () => { photoEl.style.display='none'; placeholderEl.style.display='block'; };
+  photoEl.src = `${GITHUB_BASE}players/${slug}.jpg`;
+  photoEl.onerror = () => {
+    if (photoEl.src.endsWith('.jpg')) {
+      photoEl.src = `${GITHUB_BASE}players/${slug}.jpeg`;
+    } else {
+      photoEl.style.display='none';
+      placeholderEl.style.display='block';
+    }
+  };
 
   document.getElementById('pmodal-name').textContent = name;
   document.getElementById('pmodal-appearances').textContent =
@@ -1294,6 +1323,7 @@ async function saveAdmin() {
 
   const ok = await saveData();
   if (ok) {
+    localStorage.removeItem(CACHE_KEY);
     showToast('✓ Saved & published!');
     closeModal('modal-admin');
     renderHome();
