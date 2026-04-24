@@ -1340,18 +1340,21 @@ function buildYearCard(yr) {
       }).join('') : `<div style="font-size:0.72rem;color:var(--text-light);padding:6px 0">No scores yet</div>`;
 
       return `<div style="margin-bottom:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cream-dark)">
-          <span style="font-size:0.8rem;font-weight:700;color:var(--forest-deep)">${r.name}</span>
-          <span style="font-size:0.62rem;color:var(--text-light);letter-spacing:0.1em;text-transform:uppercase">${r.format}</span>
-          ${hasScores ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-mid)">${jr} – ${tr}</span>` : '<span style="font-size:0.65rem;color:var(--text-light)">Upcoming</span>'}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);gap:8px">
+          <span style="font-size:0.8rem;font-weight:700;color:var(--forest-deep);white-space:nowrap">${r.name}</span>
+          <span style="font-size:0.62rem;color:var(--text-light);letter-spacing:0.1em;text-transform:uppercase;text-align:center;flex:1">${r.format}</span>
+          ${hasScores ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-mid);white-space:nowrap">${jr} – ${tr}</span>` : '<span style="font-size:0.65rem;color:var(--text-light);white-space:nowrap">Upcoming</span>'}
         </div>
         ${matchupRows}
       </div>`;
     }).join('');
 
-    const isLive = d.jakeWon === null;
+    const isLive = d.jakeWon === null && (d.rounds || []).some(r => (r.matchups||[]).some(m => m.jakeScore != null));
+    const isUpcoming = d.jakeWon === null && !isLive;
     const jLeading = jakeTotal > travisTotal;
-    const headerBadge = isLive
+    const headerBadge = isUpcoming
+      ? `<div class="winner-badge" style="background:rgba(201,168,76,0.15);color:var(--gold)">📅 Upcoming</div>`
+      : isLive
       ? `<div class="winner-badge" style="background:rgba(201,168,76,0.2);color:var(--gold)">🏌️ In Progress</div>`
       : `<div class="winner-badge">🏆 ${d.jakeWon ? d.jakeTeam : d.travisTeam}</div>`;
 
