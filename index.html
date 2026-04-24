@@ -666,40 +666,40 @@ const DEFAULT_DATA = {
       subtitle: '3rd Annual · La Crosse, WI',
       courses: 'Fox Hollow & Forest Hills',
       dates: 'June 26–29, 2025',
-      jakeTeam: 'Team Old Crow',
-      travisTeam: "Team Howie's",
+      jakeTeam: "Team Howie's",
+      travisTeam: 'Team Old Crow',
       jakeWon: true,
       jakeScore: 97,
       travisScore: 95,
       jakePlayers: [
-        {name:'Colby Dean', hdcp:0},{name:'Logan Raffel',hdcp:7},{name:'James Rawlins',hdcp:8},
-        {name:'Peter Raffel',hdcp:15},{name:'Travis Raffel',hdcp:15},{name:'Griffin Gussel',hdcp:15},
-        {name:'Michael Ignasiak',hdcp:18},{name:'Drew Schneider',hdcp:21}
-      ],
-      travisPlayers: [
         {name:'Blake Jens',hdcp:0},{name:'Danny Hooten',hdcp:0},{name:'Kevin Jean',hdcp:5},
         {name:'Jordan Recker',hdcp:12},{name:'Jake Raffel',hdcp:15},{name:'Joey Recker',hdcp:15},
         {name:'Christian Nilsen',hdcp:17},{name:'Tony Schneider',hdcp:22}
+      ],
+      travisPlayers: [
+        {name:'Colby Dean',hdcp:0},{name:'Logan Raffel',hdcp:7},{name:'James Rawlins',hdcp:8},
+        {name:'Peter Raffel',hdcp:15},{name:'Travis Raffel',hdcp:15},{name:'Griffin Gussel',hdcp:15},
+        {name:'Michael Ignasiak',hdcp:18},{name:'Drew Schneider',hdcp:21}
       ]
     },
     '2024': {
       subtitle: '2nd Annual · Green Bay, WI',
       courses: 'Thornberry Creek GC & Brown County GC',
       dates: 'October 4–7, 2024',
-      jakeTeam: 'Team Willis',
-      travisTeam: 'Team Love',
+      jakeTeam: 'Team Love',
+      travisTeam: 'Team Willis',
       jakeWon: false,
       jakeScore: null,
       travisScore: null,
       jakePlayers: [
-        {name:'Peter Kuhl',hdcp:'+3'},{name:'Brady Thomas',hdcp:0},{name:'James Rawlins',hdcp:5},
-        {name:'Logan Raffel',hdcp:7},{name:'Peter Raffel',hdcp:14},{name:'Travis Raffel',hdcp:15},
-        {name:'Michael Ignasiak Jr',hdcp:17},{name:'Alex Kirchner',hdcp:23}
-      ],
-      travisPlayers: [
         {name:'Blake Jens',hdcp:0},{name:'Kevin Jean',hdcp:5},{name:'Drew Finley-Haag',hdcp:7},
         {name:'Jake Raffel',hdcp:14},{name:'Nick Blough',hdcp:15},{name:'Jordan Recker',hdcp:15},
         {name:'Christian Nilsen',hdcp:17},{name:'Tony Schneider',hdcp:21}
+      ],
+      travisPlayers: [
+        {name:'Peter Kuhl',hdcp:-3},{name:'Brady Thomas',hdcp:0},{name:'James Rawlins',hdcp:5},
+        {name:'Logan Raffel',hdcp:7},{name:'Peter Raffel',hdcp:14},{name:'Travis Raffel',hdcp:15},
+        {name:'Michael Ignasiak Jr',hdcp:17},{name:'Alex Kirchner',hdcp:23}
       ]
     },
     '2023': {
@@ -712,7 +712,7 @@ const DEFAULT_DATA = {
       jakeScore: null,
       travisScore: null,
       jakePlayers: [
-        {name:'Colby Dean',hdcp:'+2'},{name:'Jake Raffel',hdcp:14},{name:'Peter Raffel',hdcp:15},
+        {name:'Colby Dean',hdcp:-2},{name:'Jake Raffel',hdcp:14},{name:'Peter Raffel',hdcp:15},
         {name:'Jordan Recker',hdcp:16},{name:'Drew Schneider',hdcp:18},{name:'Jimmy Hamilton',hdcp:22}
       ],
       travisPlayers: [
@@ -801,6 +801,12 @@ function renderHistory() {
   el.innerHTML = years.map(yr => buildYearCard(yr)).join('');
 }
 
+function formatHdcp(h) {
+  if (h < 0) return '+' + Math.abs(h);
+  if (h === 0) return '0';
+  return h;
+}
+
 function buildYearCard(yr) {
   const d = DB.years[yr];
   if (!d) return '';
@@ -819,10 +825,10 @@ function buildYearCard(yr) {
     </div>` : '';
 
   const jakeList = d.jakePlayers.map(p =>
-    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">+${p.hdcp}</span></li>`
+    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
   ).join('');
   const travisList = d.travisPlayers.map(p =>
-    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">+${p.hdcp}</span></li>`
+    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
   ).join('');
 
   return `
