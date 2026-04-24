@@ -1272,10 +1272,15 @@ function renderLiveLeaderboard() {
   const travisPlayers = Object.entries(players).filter(([,v]) => v.side==='travis').sort((a,b) => b[1].totalPts - a[1].totalPts);
 
   const playerRows = (arr) => arr.map(([name, p]) => {
-    if (p.roundPts.every(r => r.raw === null)) return ''; // only hide if NO rounds entered at all
-    return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.72rem">
+    if (p.roundPts.every(r => r.raw === null)) return '';
+    const rawTotal = p.roundPts.reduce((sum, r) => sum + (r.raw !== null ? r.raw : 0), 0);
+    const contrib = p.totalPts;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.72rem">
       <span style="color:rgba(248,245,238,0.7)">${name}</span>
-      <span style="font-weight:700;color:var(--gold-light)">${p.totalPts.toFixed(1).replace('.0','')}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="color:rgba(248,245,238,0.4);font-size:0.65rem">${rawTotal} raw</span>
+        <span style="font-weight:700;color:var(--gold-light);min-width:28px;text-align:right">${contrib.toFixed(1).replace('.0','')} pts</span>
+      </div>
     </div>`;
   }).filter(Boolean).join('');
 
@@ -1563,10 +1568,45 @@ function openPlayerModal(name) {
   document.getElementById('pmodal-years').innerHTML = history.map(h => {
     const tsx = DB.years[h.yr] && DB.years[h.yr].tsxFactor === name
       ? ` <span class="tsx-badge">⚡ TSX</span>` : '';
-    return `<div class="player-modal-year-row">
-      <span class="player-modal-yr">${h.yr}</span>
-      <span class="player-modal-team">${h.team}${tsx}</span>
-      <span class="player-modal-result ${h.won ? 'result-win' : 'result-loss'}">${h.won ? 'Won' : 'Lost'}</span>
+    const d = DB.years[h.yr];
+
+    // For rounds-based years, show individual scoring breakdown
+    let scoringHTML = '';
+    if (d && d.rounds) {
+      const { players } = calcScores(d);
+      const playerData = players[name];
+      if (playerData && playerData.roundPts.some(r => r.raw !== null)) {
+        const rawTotal = playerData.roundPts.reduce((s, r) => s + (r.raw !== null ? r.raw : 0), 0);
+        const contribTotal = playerData.totalPts;
+        const roundBreakdown = playerData.roundPts.map((r, ri) => {
+          if (r.raw === null) return '';
+          return `<div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-light);padding:2px 0">
+            <span>${d.rounds[ri].name}</span>
+            <span>${r.raw} raw → <strong style="color:var(--text-mid)">${r.pts.toFixed(1).replace('.0','')} pts</strong></span>
+          </div>`;
+        }).filter(Boolean).join('');
+
+        scoringHTML = `
+          <div style="margin-top:8px;padding:8px 10px;background:var(--cream);border-radius:3px;border:1px solid var(--cream-dark)">
+            ${roundBreakdown}
+            <div style="display:flex;justify-content:space-between;font-size:0.68rem;font-weight:700;color:var(--forest-deep);padding-top:6px;margin-top:4px;border-top:1px solid var(--border)">
+              <span>Total</span>
+              <span>${rawTotal} raw · ${contribTotal.toFixed(1).replace('.0','')} pts</span>
+            </div>
+          </div>`;
+      }
+    }
+
+    const resultLabel = h.won === null ? '—' : h.won ? 'Won' : 'Lost';
+    const resultClass = h.won === null ? '' : h.won ? 'result-win' : 'result-loss';
+
+    return `<div class="player-modal-year-row" style="flex-direction:column;align-items:stretch;gap:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="player-modal-yr">${h.yr}</span>
+        <span class="player-modal-team">${h.team}${tsx}</span>
+        <span class="player-modal-result ${resultClass}">${resultLabel}</span>
+      </div>
+      ${scoringHTML}
     </div>`;
   }).join('');
 
