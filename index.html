@@ -1900,16 +1900,14 @@ async function saveSettings() {
   if (travisTeam) DB.years[yr].travisTeam = travisTeam;
   if (tsx) DB.years[yr].tsxFactor = tsx;
 
-  // Parse player rosters for live year
+  // Parse player rosters for live year (always save, even if empty)
   if (yr === DB.liveYear) {
-    if (jakePlayers) {
-      DB.years[yr].jakePlayers = jakePlayers.split('\n')
-        .map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}));
-    }
-    if (travisPlayers) {
-      DB.years[yr].travisPlayers = travisPlayers.split('\n')
-        .map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}));
-    }
+    DB.years[yr].jakePlayers = jakePlayers
+      ? jakePlayers.split('\n').map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}))
+      : [];
+    DB.years[yr].travisPlayers = travisPlayers
+      ? travisPlayers.split('\n').map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}))
+      : [];
   }
 
   DB.nextEvent.title = document.getElementById('admin-next-title').value.trim() || DB.nextEvent.title;
