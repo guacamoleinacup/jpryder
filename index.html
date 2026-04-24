@@ -1829,7 +1829,7 @@ function renderNominations() {
   const pickerName = picker === 'jake' ? s.jakeTeam : s.travisTeam;
   const totalPicked = s.jake.length + s.travis.length;
   const totalPlayers = totalPicked + s.pool.length;
-  const draftDone = s.pool.length === 0;
+  const draftDone = s.pool.length === 0 && totalPicked > 0;
 
   const pickBanner = !draftDone ? `
     <div class="nom-pick-banner">
