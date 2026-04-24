@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JP Ryder Cup</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --forest: #2d4a3e;
+  --forest-deep: #1a2e26;
+  --forest-light: #3d6b58;
+  --sage: #5a7a6a;
+  --gold: #c9a84c;
+  --gold-light: #e8cc7a;
+  --gold-pale: #f5e9c4;
+  --cream: #f8f5ee;
+  --cream-dark: #ede8d8;
+  --white: #ffffff;
+  --text: #1a1a1a;
+  --text-mid: #444;
+  --text-light: #777;
+  --border: #c8bfa0;
+  --shadow: rgba(26,46,38,0.18);
+  --jake: #2d4a3e;
+  --travis: #8b2e2e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--forest-deep);
+  position: sticky; top: 0; z-index: 200;
+  border-bottom: 2px solid var(--gold);
+  box-shadow: 0 2px 24px rgba(0,0,0,0.45);
+}
+.header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; max-width: 1100px; margin: 0 auto;
+}
+.logo-wrap {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+}
+.logo-wrap img {
+  height: 52px; width: 52px; object-fit: contain;
+  filter: brightness(0) invert(1) sepia(1) saturate(2) hue-rotate(5deg);
+}
+.site-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--cream); letter-spacing: 0.06em;
+  line-height: 1;
+}
+.site-title span { color: var(--gold); }
+nav { display: flex; gap: 0; }
+nav button {
+  background: none; border: none;
+  color: rgba(248,245,238,0.65);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 20px 16px; cursor: pointer;
+  transition: color 0.2s, border-bottom 0.2s;
+  border-bottom: 2px solid transparent;
+  position: relative; top: 2px;
+}
+nav button:hover { color: var(--gold-light); }
+nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
+.admin-btn {
+  background: none; border: 1px solid rgba(201,168,76,0.4);
+  color: rgba(201,168,76,0.7); font-family: 'Montserrat', sans-serif;
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.15em;
+  text-transform: uppercase; padding: 7px 12px; cursor: pointer;
+  border-radius: 2px; transition: all 0.2s;
+}
+.admin-btn:hover { background: rgba(201,168,76,0.1); color: var(--gold); }
+
+/* ── SECTIONS ── */
+.section { display: none; }
+.section.active { display: block; }
+.page-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
+
+/* ── HOME HERO ── */
+.hero {
+  background: var(--forest-deep);
+  padding: 60px 24px 50px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-logo {
+  height: 100px; width: 100px; object-fit: contain;
+  filter: brightness(0) invert(1) sepia(1) saturate(1.5) hue-rotate(5deg);
+  margin-bottom: 20px;
+  animation: fadeDown 0.7s ease both;
+}
+.hero-est {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.35em;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 10px;
+  animation: fadeDown 0.7s 0.1s ease both;
+}
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 700; color: var(--cream);
+  letter-spacing: 0.04em; line-height: 1.1;
+  animation: fadeDown 0.7s 0.15s ease both;
+}
+.hero-title span { color: var(--gold); }
+.hero-sub {
+  font-size: 0.72rem; font-weight: 500; letter-spacing: 0.2em;
+  color: rgba(248,245,238,0.5); text-transform: uppercase;
+  margin-top: 10px;
+  animation: fadeDown 0.7s 0.2s ease both;
+}
+.hero-divider {
+  width: 60px; height: 1px; background: var(--gold);
+  margin: 24px auto;
+  animation: fadeDown 0.7s 0.25s ease both;
+}
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SERIES SCOREBOARD ── */
+.series-board {
+  max-width: 700px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 0; background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 4px; overflow: hidden;
+  animation: fadeDown 0.7s 0.3s ease both;
+}
+.series-side {
+  padding: 28px 24px; text-align: center;
+}
+.series-side.jake { background: rgba(45,74,62,0.6); }
+.series-side.travis { background: rgba(139,46,46,0.35); }
+.series-captain {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--gold-light); margin-bottom: 6px;
+}
+.series-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.8rem; font-weight: 700; color: var(--cream);
+}
+.series-wins {
+  font-size: 3rem; font-weight: 700; color: var(--gold);
+  font-family: 'Cormorant Garamond', serif; line-height: 1.1;
+  margin-top: 4px;
+}
+.series-label { font-size: 0.58rem; color: rgba(248,245,238,0.45); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 2px; }
+.series-mid {
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  padding: 0 20px;
+  border-left: 1px solid rgba(201,168,76,0.2);
+  border-right: 1px solid rgba(201,168,76,0.2);
+}
+.series-vs {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; font-style: italic; color: rgba(201,168,76,0.5);
+}
+.series-record-label {
+  font-size: 0.55rem; color: rgba(248,245,238,0.35);
+  letter-spacing: 0.2em; text-transform: uppercase; margin-top: 6px;
+}
+
+/* ── NEXT EVENT CARD ── */
+.next-event {
+  max-width: 700px; margin: 32px auto 0;
+  border: 1px solid rgba(201,168,76,0.3);
+  background: rgba(45,74,62,0.25);
+  border-radius: 4px; padding: 28px 32px;
+  text-align: center;
+  animation: fadeDown 0.7s 0.35s ease both;
+}
+.next-label {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.3em;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 8px;
+}
+.next-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; color: var(--cream); font-weight: 600;
+}
+.next-details {
+  font-size: 0.75rem; color: rgba(248,245,238,0.6);
+  margin-top: 8px; line-height: 1.8; letter-spacing: 0.05em;
+}
+
+/* ── HISTORY SECTION ── */
+.section-header {
+  text-align: center; margin-bottom: 40px;
+}
+.section-header h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem; font-weight: 700; color: var(--forest-deep);
+}
+.section-header .underline {
+  width: 50px; height: 2px; background: var(--gold);
+  margin: 10px auto 0;
+}
+
+.year-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 32px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px var(--shadow);
+}
+.year-card-header {
+  background: var(--forest-deep);
+  padding: 20px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.year-card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 700; color: var(--cream);
+}
+.year-card-sub {
+  font-size: 0.65rem; color: var(--gold-light); letter-spacing: 0.2em; text-transform: uppercase;
+  margin-top: 2px;
+}
+.winner-badge {
+  background: var(--gold);
+  color: var(--forest-deep);
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
+  text-transform: uppercase; padding: 6px 14px; border-radius: 2px;
+}
+.year-card-body { padding: 28px; }
+.year-info-row {
+  display: flex; gap: 32px; flex-wrap: wrap;
+  margin-bottom: 24px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--cream-dark);
+}
+.year-info-item { font-size: 0.8rem; color: var(--text-mid); }
+.year-info-item strong { display: block; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-light); margin-bottom: 2px; }
+
+.teams-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+@media(max-width:600px){ .teams-grid { grid-template-columns: 1fr; } }
+
+.team-block { }
+.team-block-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 2px solid var(--cream-dark);
+}
+.team-block-header.jake-team { border-bottom-color: var(--jake); }
+.team-block-header.travis-team { border-bottom-color: var(--travis); }
+.team-block-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 700; color: var(--forest-deep);
+}
+.team-captain-tag {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.15em;
+  text-transform: uppercase; padding: 2px 7px; border-radius: 2px;
+}
+.captain-jake { background: rgba(45,74,62,0.12); color: var(--jake); }
+.captain-travis { background: rgba(139,46,46,0.1); color: var(--travis); }
+
+.player-list { list-style: none; }
+.player-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; font-size: 0.78rem; color: var(--text-mid);
+  border-bottom: 1px solid var(--cream-dark);
+}
+.player-item:last-child { border-bottom: none; }
+.player-hdcp {
+  font-size: 0.68rem; color: var(--text-light);
+  background: var(--cream-dark); padding: 1px 7px; border-radius: 10px;
+}
+
+/* ── SCORE DISPLAY ── */
+.score-display {
+  display: flex; gap: 16px; align-items: center;
+  justify-content: center; margin-top: 20px;
+  padding: 16px; background: var(--cream); border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.score-team {
+  text-align: center; flex: 1;
+}
+.score-team-name {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--text-light); margin-bottom: 4px;
+}
+.score-pts {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.4rem; font-weight: 700; color: var(--forest-deep);
+}
+.score-pts.winner { color: var(--gold); }
+.score-sep {
+  font-size: 1rem; color: var(--border); font-weight: 300;
+}
+
+/* ── GALLERY ── */
+.gallery-year-section { margin-bottom: 48px; }
+.gallery-year-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 700; color: var(--forest-deep);
+  margin-bottom: 16px; padding-bottom: 8px;
+  border-bottom: 2px solid var(--gold);
+  display: flex; align-items: center; gap: 12px;
+}
+.gallery-year-sub {
+  font-size: 0.65rem; font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--text-light);
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.gallery-item {
+  aspect-ratio: 4/3; overflow: hidden; border-radius: 3px;
+  background: var(--forest-deep);
+  border: 1px solid var(--border);
+  cursor: pointer; position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.gallery-item:hover { transform: scale(1.02); box-shadow: 0 6px 24px var(--shadow); }
+.gallery-item img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: opacity 0.3s;
+}
+.gallery-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest-light) 100%);
+}
+.gallery-placeholder span { font-size: 1.5rem; }
+.gallery-placeholder p { font-size: 0.6rem; letter-spacing: 0.2em; color: rgba(248,245,238,0.4); text-transform: uppercase; }
+
+/* ── LIGHTBOX ── */
+#lightbox {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+}
+#lightbox.open { display: flex; }
+#lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 2px; }
+#lightbox-close {
+  position: absolute; top: 20px; right: 24px;
+  background: none; border: none; color: var(--cream); font-size: 2rem; cursor: pointer;
+}
+
+/* ── ADMIN MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: 4px;
+  padding: 36px; max-width: 480px; width: 90%;
+  border-top: 3px solid var(--gold);
+  box-shadow: 0 8px 48px rgba(0,0,0,0.4);
+}
+.modal h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; color: var(--forest-deep); margin-bottom: 20px;
+}
+.modal label {
+  display: block; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-light); margin-bottom: 5px; margin-top: 14px;
+}
+.modal input, .modal select {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid var(--border); border-radius: 2px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.85rem;
+  background: var(--cream); color: var(--text);
+}
+.modal input:focus, .modal select:focus { outline: 2px solid var(--gold); }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.btn-primary {
+  flex: 1; padding: 10px; background: var(--forest-deep);
+  color: var(--cream); border: none; border-radius: 2px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.75rem;
+  font-weight: 600; letter-spacing: 0.1em; cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--forest-light); }
+.btn-secondary {
+  flex: 1; padding: 10px; background: none;
+  color: var(--text-mid); border: 1px solid var(--border); border-radius: 2px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.75rem;
+  font-weight: 600; cursor: pointer;
+}
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--forest-deep); color: var(--cream);
+  padding: 12px 24px; border-radius: 4px; font-size: 0.8rem;
+  border-left: 3px solid var(--gold);
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  z-index: 999;
+}
+.toast.show { opacity: 1; }
+.loading {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-light); font-size: 0.8rem; letter-spacing: 0.15em;
+}
+
+/* ── PLAYER CARDS ── */
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px; margin-top: 32px;
+}
+.player-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 4px; overflow: hidden; text-align: center;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.player-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px var(--shadow); }
+.player-photo {
+  width: 100%; aspect-ratio: 1; overflow: hidden;
+  background: linear-gradient(135deg, var(--forest-deep), var(--forest-light));
+  display: flex; align-items: center; justify-content: center;
+}
+.player-photo img { width: 100%; height: 100%; object-fit: cover; }
+.player-photo-placeholder {
+  font-size: 2.5rem; color: rgba(248,245,238,0.3);
+}
+.player-card-info { padding: 12px 10px; }
+.player-card-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; font-weight: 700; color: var(--forest-deep);
+}
+.player-card-years {
+  font-size: 0.62rem; color: var(--text-light);
+  letter-spacing: 0.1em; margin-top: 4px; line-height: 1.6;
+}
+.player-year-tag {
+  display: inline-block;
+  font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em;
+  padding: 1px 6px; border-radius: 10px; margin: 1px 2px;
+}
+.tag-jake { background: rgba(45,74,62,0.12); color: var(--jake); }
+.tag-travis { background: rgba(139,46,46,0.1); color: var(--travis); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .header-inner { padding: 0 12px; }
+  .site-title { font-size: 1.2rem; }
+  .logo-wrap img { height: 40px; width: 40px; }
+  nav button { padding: 18px 10px; font-size: 0.62rem; }
+  .series-board { grid-template-columns: 1fr; }
+  .series-mid { padding: 12px; border: none; border-top: 1px solid rgba(201,168,76,0.2); border-bottom: 1px solid rgba(201,168,76,0.2); flex-direction: row; gap: 12px; }
+  .year-info-row { gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <img src="https://raw.githubusercontent.com/guacamoleinacup/jpryder/main/images/logo.png" alt="JP Ryder" id="header-logo">
+      <div>
+        <div class="site-title">JP <span>Ryder</span></div>
+      </div>
+    </div>
+    <nav>
+      <button class="active" onclick="showSection('home',this)">Home</button>
+      <button onclick="showSection('history',this)">History</button>
+      <button onclick="showSection('players',this)">Players</button>
+      <button onclick="showSection('gallery',this)">Gallery</button>
+    </nav>
+    <button class="admin-btn" onclick="openAdmin()">Admin</button>
+  </div>
+</header>
+
+<!-- HOME -->
+<div id="sec-home" class="section active">
+  <div class="hero">
+    <img src="https://raw.githubusercontent.com/guacamoleinacup/jpryder/main/images/logo.png" alt="JP Ryder" class="hero-logo" id="hero-logo">
+    <div class="hero-est">Est. 2023 · Annual Golf Weekend</div>
+    <div class="hero-title">JP <span>Ryder</span> Cup</div>
+    <div class="hero-sub">Wisconsin · Friends · Golf · Glory</div>
+    <div class="hero-divider"></div>
+    <div class="series-board" id="series-board">
+      <div class="series-side jake">
+        <div class="series-captain">Captain</div>
+        <div class="series-name">Jake</div>
+        <div class="series-wins" id="jake-wins">2</div>
+        <div class="series-label">Cup Wins</div>
+      </div>
+      <div class="series-mid">
+        <div class="series-vs">vs</div>
+        <div class="series-record-label">Series</div>
+      </div>
+      <div class="series-side travis">
+        <div class="series-captain">Captain</div>
+        <div class="series-name">Travis</div>
+        <div class="series-wins" id="travis-wins">1</div>
+        <div class="series-label">Cup Wins</div>
+      </div>
+    </div>
+    <div class="next-event" id="next-event">
+      <div class="next-label">Next Event</div>
+      <div class="next-title" id="next-title">4th Annual JP Ryder Cup</div>
+      <div class="next-details" id="next-details">Date & Location TBD · 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="sec-history" class="section">
+  <div class="page-wrap">
+    <div class="section-header">
+      <h2>Cup History</h2>
+      <div class="underline"></div>
+    </div>
+    <div id="history-content"><div class="loading">Loading history...</div></div>
+  </div>
+</div>
+
+<!-- PLAYERS -->
+<div id="sec-players" class="section">
+  <div class="page-wrap">
+    <div class="section-header">
+      <h2>All-Time Roster</h2>
+      <div class="underline"></div>
+    </div>
+    <div class="players-grid" id="players-grid">
+      <div class="loading">Loading players...</div>
+    </div>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<div id="sec-gallery" class="section">
+  <div class="page-wrap">
+    <div class="section-header">
+      <h2>Gallery</h2>
+      <div class="underline"></div>
+    </div>
+    <div id="gallery-content"><div class="loading">Loading gallery...</div></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <h3>Admin Access</h3>
+    <label>Password</label>
+    <input type="password" id="admin-password" placeholder="Enter password">
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="checkAdminPassword()">Enter</button>
+      <button class="btn-secondary" onclick="closeModal('modal-login')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL MODAL -->
+<div class="modal-overlay" id="modal-admin">
+  <div class="modal" style="max-width:520px">
+    <h3>⛳ Admin Panel</h3>
+    <div style="font-size:0.7rem;color:var(--text-light);margin-bottom:16px;letter-spacing:0.05em">Update live scores — visible to all visitors in real time</div>
+
+    <label>Select Year</label>
+    <select id="admin-year">
+      <option value="2025">2025</option>
+      <option value="2024">2024</option>
+      <option value="2023">2023</option>
+    </select>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
+      <div>
+        <label>Jake's Team Score</label>
+        <input type="number" id="admin-jake-score" placeholder="e.g. 97" min="0" max="200">
+      </div>
+      <div>
+        <label>Travis's Team Score</label>
+        <input type="number" id="admin-travis-score" placeholder="e.g. 95" min="0" max="200">
+      </div>
+    </div>
+
+    <label>Jake's Team Name (that year)</label>
+    <input type="text" id="admin-jake-team" placeholder="e.g. Team Old Crow">
+
+    <label>Travis's Team Name (that year)</label>
+    <input type="text" id="admin-travis-team" placeholder="e.g. Team Howie's">
+
+    <label>Next Event Info</label>
+    <input type="text" id="admin-next-title" placeholder="e.g. 4th Annual JP Ryder Cup">
+    <input type="text" id="admin-next-details" placeholder="e.g. June 2026 · Location TBD" style="margin-top:6px">
+
+    <div class="modal-btns" style="margin-top:20px">
+      <button class="btn-primary" onclick="saveAdmin()">Save & Publish</button>
+      <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ── REPLACE WITH YOUR JSONBIN API KEY ──
+const BIN_ID = '69eb8eb236566621a8e9a97c';
+const API_KEY = 'YOUR_JSONBIN_API_KEY_HERE'; // ← paste your key here
+const ADMIN_PASS = 'jpbod123!';
+const GITHUB_BASE = 'https://raw.githubusercontent.com/guacamoleinacup/jpryder/main/images/';
+
+// ── DEFAULT DATA ──
+const DEFAULT_DATA = {
+  seriesWins: { jake: 2, travis: 1 },
+  nextEvent: {
+    title: '4th Annual JP Ryder Cup',
+    details: 'Date & Location TBD · 2026'
+  },
+  years: {
+    '2025': {
+      subtitle: '3rd Annual · La Crosse, WI',
+      courses: 'Fox Hollow & Forest Hills',
+      dates: 'June 26–29, 2025',
+      jakeTeam: 'Team Old Crow',
+      travisTeam: "Team Howie's",
+      jakeWon: true,
+      jakeScore: 97,
+      travisScore: 95,
+      jakePlayers: [
+        {name:'Colby Dean', hdcp:0},{name:'Logan Raffel',hdcp:7},{name:'James Rawlins',hdcp:8},
+        {name:'Peter Raffel',hdcp:15},{name:'Travis Raffel',hdcp:15},{name:'Griffin Gussel',hdcp:15},
+        {name:'Michael Ignasiak',hdcp:18},{name:'Drew Schneider',hdcp:21}
+      ],
+      travisPlayers: [
+        {name:'Blake Jens',hdcp:0},{name:'Danny Hooten',hdcp:0},{name:'Kevin Jean',hdcp:5},
+        {name:'Jordan Recker',hdcp:12},{name:'Jake Raffel',hdcp:15},{name:'Joey Recker',hdcp:15},
+        {name:'Christian Nilsen',hdcp:17},{name:'Tony Schneider',hdcp:22}
+      ]
+    },
+    '2024': {
+      subtitle: '2nd Annual · Green Bay, WI',
+      courses: 'Thornberry Creek GC & Brown County GC',
+      dates: 'October 4–7, 2024',
+      jakeTeam: 'Team Willis',
+      travisTeam: 'Team Love',
+      jakeWon: false,
+      jakeScore: null,
+      travisScore: null,
+      jakePlayers: [
+        {name:'Peter Kuhl',hdcp:'+3'},{name:'Brady Thomas',hdcp:0},{name:'James Rawlins',hdcp:5},
+        {name:'Logan Raffel',hdcp:7},{name:'Peter Raffel',hdcp:14},{name:'Travis Raffel',hdcp:15},
+        {name:'Michael Ignasiak Jr',hdcp:17},{name:'Alex Kirchner',hdcp:23}
+      ],
+      travisPlayers: [
+        {name:'Blake Jens',hdcp:0},{name:'Kevin Jean',hdcp:5},{name:'Drew Finley-Haag',hdcp:7},
+        {name:'Jake Raffel',hdcp:14},{name:'Nick Blough',hdcp:15},{name:'Jordan Recker',hdcp:15},
+        {name:'Christian Nilsen',hdcp:17},{name:'Tony Schneider',hdcp:21}
+      ]
+    },
+    '2023': {
+      subtitle: '1st Annual · Madison, WI',
+      courses: 'Deer Valley GC & Lake Windsor CC',
+      dates: 'August 4–6, 2023',
+      jakeTeam: 'Team Creed',
+      travisTeam: 'Team Nickleback',
+      jakeWon: true,
+      jakeScore: null,
+      travisScore: null,
+      jakePlayers: [
+        {name:'Colby Dean',hdcp:'+2'},{name:'Jake Raffel',hdcp:14},{name:'Peter Raffel',hdcp:15},
+        {name:'Jordan Recker',hdcp:16},{name:'Drew Schneider',hdcp:18},{name:'Jimmy Hamilton',hdcp:22}
+      ],
+      travisPlayers: [
+        {name:'Logan Raffel',hdcp:7},{name:'Jerry Raffel',hdcp:8},{name:'Steve Munoz',hdcp:14},
+        {name:'Christian Nilsen',hdcp:15},{name:'William Braxton',hdcp:19},{name:'Travis Raffel',hdcp:19}
+      ]
+    }
+  },
+  gallery: {
+    '2025': ['2025_1.jpg','2025_2.jpg','2025_3.jpg'],
+    '2024': ['2024_1.jpg','2024_2.jpg','2024_3.jpg'],
+    '2023': ['2023_1.jpg','2023_2.jpg','2023_3.jpg']
+  }
+};
+
+let DB = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+// ── NAV ──
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'history') renderHistory();
+  if (id === 'players') renderPlayers();
+  if (id === 'gallery') renderGallery();
+}
+
+// ── LOAD DATA ──
+async function loadData() {
+  if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') {
+    renderHome();
+    return;
+  }
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    const json = await res.json();
+    if (json.record) DB = Object.assign({}, DEFAULT_DATA, json.record);
+  } catch(e) { console.warn('JSONBin load failed, using defaults'); }
+  renderHome();
+}
+
+async function saveData() {
+  if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') { showToast('Add your API key first!'); return false; }
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+      body: JSON.stringify(DB)
+    });
+    return true;
+  } catch(e) { showToast('Save failed — check connection'); return false; }
+}
+
+// ── RENDER HOME ──
+function renderHome() {
+  document.getElementById('jake-wins').textContent = DB.seriesWins.jake;
+  document.getElementById('travis-wins').textContent = DB.seriesWins.travis;
+  document.getElementById('next-title').textContent = DB.nextEvent.title;
+  document.getElementById('next-details').textContent = DB.nextEvent.details;
+}
+
+// ── RENDER HISTORY ──
+function renderHistory() {
+  const el = document.getElementById('history-content');
+  const years = ['2025','2024','2023'];
+  el.innerHTML = years.map(yr => buildYearCard(yr)).join('');
+}
+
+function buildYearCard(yr) {
+  const d = DB.years[yr];
+  if (!d) return '';
+  const winner = d.jakeWon ? d.jakeTeam : d.travisTeam;
+  const scoreHTML = (d.jakeScore !== null && d.travisScore !== null) ? `
+    <div class="score-display">
+      <div class="score-team">
+        <div class="score-team-name">${d.jakeTeam}</div>
+        <div class="score-pts ${d.jakeWon?'winner':''}">${d.jakeScore}</div>
+      </div>
+      <div class="score-sep">–</div>
+      <div class="score-team">
+        <div class="score-team-name">${d.travisTeam}</div>
+        <div class="score-pts ${!d.jakeWon?'winner':''}">${d.travisScore}</div>
+      </div>
+    </div>` : '';
+
+  const jakeList = d.jakePlayers.map(p =>
+    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">+${p.hdcp}</span></li>`
+  ).join('');
+  const travisList = d.travisPlayers.map(p =>
+    `<li class="player-item"><span>${p.name}</span><span class="player-hdcp">+${p.hdcp}</span></li>`
+  ).join('');
+
+  return `
+  <div class="year-card">
+    <div class="year-card-header">
+      <div>
+        <div class="year-card-title">${yr} JP Ryder Cup</div>
+        <div class="year-card-sub">${d.subtitle}</div>
+      </div>
+      <div class="winner-badge">🏆 ${winner}</div>
+    </div>
+    <div class="year-card-body">
+      <div class="year-info-row">
+        <div class="year-info-item"><strong>Courses</strong>${d.courses}</div>
+        <div class="year-info-item"><strong>Dates</strong>${d.dates}</div>
+        <div class="year-info-item"><strong>Format</strong>Four Ball + Singles Match Play</div>
+        <div class="year-info-item"><strong>Handicap</strong>80%</div>
+      </div>
+      <div class="teams-grid">
+        <div class="team-block">
+          <div class="team-block-header jake-team">
+            <div class="team-block-name">${d.jakeTeam}</div>
+            <span class="team-captain-tag captain-jake">Jake</span>
+          </div>
+          <ul class="player-list">${jakeList}</ul>
+        </div>
+        <div class="team-block">
+          <div class="team-block-header travis-team">
+            <div class="team-block-name">${d.travisTeam}</div>
+            <span class="team-captain-tag captain-travis">Travis</span>
+          </div>
+          <ul class="player-list">${travisList}</ul>
+        </div>
+      </div>
+      ${scoreHTML}
+    </div>
+  </div>`;
+}
+
+// ── RENDER PLAYERS ──
+function renderPlayers() {
+  const allPlayers = {};
+  ['2023','2024','2025'].forEach(yr => {
+    const d = DB.years[yr];
+    if (!d) return;
+    d.jakePlayers.forEach(p => {
+      if (!allPlayers[p.name]) allPlayers[p.name] = [];
+      allPlayers[p.name].push({yr, team: d.jakeTeam, captain: 'jake'});
+    });
+    d.travisPlayers.forEach(p => {
+      if (!allPlayers[p.name]) allPlayers[p.name] = [];
+      allPlayers[p.name].push({yr, team: d.travisTeam, captain: 'travis'});
+    });
+  });
+
+  const sorted = Object.keys(allPlayers).sort();
+  const grid = document.getElementById('players-grid');
+  grid.innerHTML = sorted.map(name => {
+    const entries = allPlayers[name];
+    const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    const photoUrl = `${GITHUB_BASE}players/${slug}.jpg`;
+    const yearTags = entries.map(e =>
+      `<span class="player-year-tag tag-${e.captain}">${e.yr} · ${e.team}</span>`
+    ).join('');
+    return `
+    <div class="player-card">
+      <div class="player-photo">
+        <img src="${photoUrl}" alt="${name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="player-photo-placeholder" style="display:none">⛳</div>
+      </div>
+      <div class="player-card-info">
+        <div class="player-card-name">${name}</div>
+        <div class="player-card-years">${yearTags}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER GALLERY ──
+function renderGallery() {
+  const el = document.getElementById('gallery-content');
+  const years = ['2025','2024','2023'];
+  const yearLabels = {
+    '2025': '3rd Annual · La Crosse, WI',
+    '2024': '2nd Annual · Green Bay, WI',
+    '2023': '1st Annual · Madison, WI'
+  };
+  el.innerHTML = years.map(yr => {
+    const imgs = DB.gallery[yr] || [];
+    const items = imgs.length
+      ? imgs.map(fn => {
+          const url = `${GITHUB_BASE}gallery/${yr}/${fn}`;
+          return `<div class="gallery-item" onclick="openLightbox('${url}')">
+            <img src="${url}" alt="${yr} photo"
+              onerror="this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>Photo coming soon</p></div>'">
+          </div>`;
+        }).join('')
+      : `<div class="gallery-item"><div class="gallery-placeholder"><span>📷</span><p>Photos coming soon</p></div></div>`.repeat(3);
+
+    return `<div class="gallery-year-section">
+      <div class="gallery-year-title">
+        ${yr} <span class="gallery-year-sub">${yearLabels[yr]}</span>
+      </div>
+      <div class="gallery-grid">${items}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── LIGHTBOX ──
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+document.getElementById('lightbox').addEventListener('click', e => {
+  if (e.target === document.getElementById('lightbox')) closeLightbox();
+});
+
+// ── ADMIN ──
+function openAdmin() { document.getElementById('modal-login').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function checkAdminPassword() {
+  const val = document.getElementById('admin-password').value;
+  if (val === ADMIN_PASS) {
+    closeModal('modal-login');
+    document.getElementById('admin-password').value = '';
+    openAdminPanel();
+  } else {
+    showToast('Incorrect password');
+  }
+}
+
+function openAdminPanel() {
+  const yr = document.getElementById('admin-year').value || '2025';
+  const d = DB.years[yr] || {};
+  document.getElementById('admin-jake-score').value = d.jakeScore || '';
+  document.getElementById('admin-travis-score').value = d.travisScore || '';
+  document.getElementById('admin-jake-team').value = d.jakeTeam || '';
+  document.getElementById('admin-travis-team').value = d.travisTeam || '';
+  document.getElementById('admin-next-title').value = DB.nextEvent.title || '';
+  document.getElementById('admin-next-details').value = DB.nextEvent.details || '';
+  document.getElementById('modal-admin').classList.add('open');
+}
+
+document.getElementById('admin-year').addEventListener('change', function() {
+  const yr = this.value;
+  const d = DB.years[yr] || {};
+  document.getElementById('admin-jake-score').value = d.jakeScore || '';
+  document.getElementById('admin-travis-score').value = d.travisScore || '';
+  document.getElementById('admin-jake-team').value = d.jakeTeam || '';
+  document.getElementById('admin-travis-team').value = d.travisTeam || '';
+});
+
+async function saveAdmin() {
+  const yr = document.getElementById('admin-year').value;
+  const jakeScore = parseInt(document.getElementById('admin-jake-score').value) || null;
+  const travisScore = parseInt(document.getElementById('admin-travis-score').value) || null;
+  const jakeTeam = document.getElementById('admin-jake-team').value.trim();
+  const travisTeam = document.getElementById('admin-travis-team').value.trim();
+
+  if (!DB.years[yr]) DB.years[yr] = {};
+  if (jakeScore !== null) DB.years[yr].jakeScore = jakeScore;
+  if (travisScore !== null) DB.years[yr].travisScore = travisScore;
+  if (jakeTeam) DB.years[yr].jakeTeam = jakeTeam;
+  if (travisTeam) DB.years[yr].travisTeam = travisTeam;
+  if (jakeScore !== null && travisScore !== null) {
+    DB.years[yr].jakeWon = jakeScore > travisScore;
+  }
+
+  DB.nextEvent.title = document.getElementById('admin-next-title').value.trim() || DB.nextEvent.title;
+  DB.nextEvent.details = document.getElementById('admin-next-details').value.trim() || DB.nextEvent.details;
+
+  // Recalculate series wins
+  let jakeW = 0, travisW = 0;
+  Object.values(DB.years).forEach(y => {
+    if (y.jakeScore !== null && y.travisScore !== null) {
+      if (y.jakeWon) jakeW++; else travisW++;
+    }
+  });
+  // Keep manual override if scores not all filled
+  DB.seriesWins.jake = jakeW || DB.seriesWins.jake;
+  DB.seriesWins.travis = travisW || DB.seriesWins.travis;
+
+  const ok = await saveData();
+  if (ok) {
+    showToast('✓ Saved & published!');
+    closeModal('modal-admin');
+    renderHome();
+  }
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── INIT ──
+loadData();
+</script>
+</body>
+</html>
