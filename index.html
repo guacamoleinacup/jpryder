@@ -1746,25 +1746,34 @@ function initNomState() {
   const d = DB.years[yr];
   if (!d) return null;
 
-  // Build full pool from Settings roster
-  const allPlayers = [
-    ...(d.jakePlayers||[]).map(p => ({...p, assigned: 'jake'})),
-    ...(d.travisPlayers||[]).map(p => ({...p, assigned: 'travis'}))
-  ];
+  const jakeDrafted = (d.jakePlayers||[]).length;
+  const travisDrafted = (d.travisPlayers||[]).length;
+  const hasDraft = jakeDrafted > 0 || travisDrafted > 0;
 
-  // If no players assigned yet, treat everyone as pool
-  const hasAssigned = allPlayers.some(p => p.assigned);
+  // If draft has happened, show current state
+  if (hasDraft) {
+    return {
+      yr,
+      pool: [],
+      jake: [...(d.jakePlayers||[])],
+      travis: [...(d.travisPlayers||[])],
+      jakeTeam: d.jakeTeam || "Jake's Team",
+      travisTeam: d.travisTeam || "Travis's Team",
+      pairings: d.rounds && d.rounds[0] ? (d.rounds[0].pairings || []) : [],
+      complete: false
+    };
+  }
 
-  // Start fresh draft state
+  // Pre-draft: pull from playerPool
+  const pool = [...(d.playerPool || [])];
   return {
     yr,
-    pool: allPlayers.filter(p => !p.assigned || allPlayers.length === 0).map(p => ({name: p.name, hdcp: p.hdcp})),
-    jake: (d.jakePlayers||[]).map(p => ({name: p.name, hdcp: p.hdcp})),
-    travis: (d.travisPlayers||[]).map(p => ({name: p.name, hdcp: p.hdcp})),
+    pool,
+    jake: [],
+    travis: [],
     jakeTeam: d.jakeTeam || "Jake's Team",
     travisTeam: d.travisTeam || "Travis's Team",
-    pickNum: (d.jakePlayers||[]).length + (d.travisPlayers||[]).length + 1,
-    pairings: d.rounds && d.rounds[0] ? (d.rounds[0].pairings || []) : [],
+    pairings: [],
     complete: false
   };
 }
@@ -1944,6 +1953,7 @@ async function nomComplete() {
   const ok = await saveData();
   if (ok) {
     localStorage.removeItem(CACHE_KEY);
+    _nomState = null; // force re-init from saved data next time
     showToast('✓ Nominations locked in!');
     btn.textContent = '✓ Nominations Complete!';
     btn.style.background = '#2d7a4a';
@@ -2268,22 +2278,18 @@ function loadSettingsPanel() {
   // Show roster inputs only for live year
   const rosterSection = document.getElementById('admin-roster-section');
   if (yr === DB.liveYear) {
-    const jakeNames = (d.jakePlayers||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n');
-    const travisNames = (d.travisPlayers||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n');
+    // Combine all players into one pool for display
+    const allPlayers = [
+      ...(d.jakePlayers||[]).map(p => `${p.name}, ${p.hdcp}`),
+      ...(d.travisPlayers||[]).map(p => `${p.name}, ${p.hdcp}`)
+    ].join('\n');
     rosterSection.innerHTML = `
       <div style="font-size:0.68rem;color:var(--text-light);margin:8px 0 4px;padding:6px 8px;background:var(--cream);border:1px solid var(--border);border-radius:2px">
-        Format: <strong>Player Name, handicap</strong> — one per line. E.g. <em>Christian Nilsen, 17</em>
+        Format: <strong>Player Name, handicap</strong> — one per line. E.g. <em>Christian Nilsen, 17</em><br>
+        All players go into the pool. Teams are assigned on Nominations night.
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
-        <div>
-          <label>Jake's Players</label>
-          <textarea id="admin-jake-players" rows="12" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${jakeNames}</textarea>
-        </div>
-        <div>
-          <label>Travis's Players</label>
-          <textarea id="admin-travis-players" rows="12" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${travisNames}</textarea>
-        </div>
-      </div>`;
+      <label>Player Pool (all participants)</label>
+      <textarea id="admin-player-pool" rows="14" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${allPlayers}</textarea>`;
   } else {
     rosterSection.innerHTML = '';
   }
@@ -2301,6 +2307,8 @@ async function saveSettings() {
     document.getElementById('admin-jake-players').value.trim() : '';
   const travisPlayers = document.getElementById('admin-travis-players') ?
     document.getElementById('admin-travis-players').value.trim() : '';
+  const poolText = document.getElementById('admin-player-pool') ?
+    document.getElementById('admin-player-pool').value.trim() : '';
 
   if (!DB.years[yr]) DB.years[yr] = {};
   if (jakeTeam) DB.years[yr].jakeTeam = jakeTeam;
@@ -2316,10 +2324,21 @@ async function saveSettings() {
       }).filter(Boolean)
     : [];
 
-  // Parse player rosters for live year (always save, even if empty)
+  // For live year: if pool entered, save to playerPool and clear team assignments
   if (yr === DB.liveYear) {
-    DB.years[yr].jakePlayers = parseRoster(jakePlayers);
-    DB.years[yr].travisPlayers = parseRoster(travisPlayers);
+    if (poolText) {
+      DB.years[yr].playerPool = parseRoster(poolText);
+      // Only clear team assignments if pool has changed and teams haven't been drafted yet
+      const drafted = (DB.years[yr].jakePlayers||[]).length + (DB.years[yr].travisPlayers||[]).length;
+      if (drafted === 0) {
+        DB.years[yr].jakePlayers = [];
+        DB.years[yr].travisPlayers = [];
+      }
+    } else if (jakePlayers || travisPlayers) {
+      // Legacy fallback
+      DB.years[yr].jakePlayers = parseRoster(jakePlayers);
+      DB.years[yr].travisPlayers = parseRoster(travisPlayers);
+    }
   }
 
   DB.nextEvent.title = document.getElementById('admin-next-title').value.trim() || DB.nextEvent.title;
