@@ -587,6 +587,155 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 }
 .tsx-modal-wrap { text-align: center; }
 
+/* ── LIVE LEADERBOARD ── */
+.live-leaderboard {
+  max-width: 700px; margin: 28px auto 0;
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 4px; overflow: hidden;
+  animation: fadeDown 0.7s 0.4s ease both;
+}
+.lb-header {
+  background: rgba(201,168,76,0.12);
+  border-bottom: 1px solid rgba(201,168,76,0.25);
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.lb-header-title {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--gold);
+}
+.lb-status {
+  font-size: 0.58rem; color: rgba(248,245,238,0.45); letter-spacing: 0.1em;
+}
+.lb-teams {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+}
+.lb-team {
+  padding: 20px 20px 16px; text-align: center;
+}
+.lb-team.jake { background: rgba(45,74,62,0.4); }
+.lb-team.travis { background: rgba(139,46,46,0.25); }
+.lb-team-name {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold-light); margin-bottom: 4px;
+}
+.lb-team-score {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem; font-weight: 700; color: var(--cream);
+  font-family: 'Montserrat', sans-serif; line-height: 1;
+}
+.lb-team-score.leading { color: var(--gold); }
+.lb-sep {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 14px;
+  font-size: 0.8rem; color: rgba(201,168,76,0.4);
+  border-left: 1px solid rgba(201,168,76,0.15);
+  border-right: 1px solid rgba(201,168,76,0.15);
+}
+.lb-rounds {
+  border-top: 1px solid rgba(201,168,76,0.15);
+}
+.lb-round-row {
+  display: grid; grid-template-columns: 1fr 2fr 1fr;
+  padding: 9px 20px; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.75rem;
+}
+.lb-round-row:last-child { border-bottom: none; }
+.lb-round-score {
+  font-weight: 700; color: var(--cream); text-align: center;
+}
+.lb-round-score.jake { color: rgba(100,200,140,0.9); }
+.lb-round-score.travis { color: rgba(220,120,120,0.9); }
+.lb-round-score.leading { color: var(--gold); }
+.lb-round-name {
+  font-size: 0.65rem; color: rgba(248,245,238,0.5);
+  text-align: center; letter-spacing: 0.05em;
+}
+.lb-round-pending {
+  font-size: 0.6rem; color: rgba(248,245,238,0.25);
+  text-align: center; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.lb-matchups {
+  padding: 12px 20px 16px;
+  border-top: 1px solid rgba(201,168,76,0.15);
+}
+.lb-matchups-title {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgba(248,245,238,0.3);
+  margin-bottom: 10px;
+}
+.matchup-row {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 6px; align-items: center; margin-bottom: 6px;
+  font-size: 0.72rem;
+}
+.matchup-player {
+  color: rgba(248,245,238,0.7); padding: 4px 0;
+}
+.matchup-player.jake { text-align: right; }
+.matchup-player.travis { text-align: left; }
+.matchup-player.winner { color: var(--gold); font-weight: 700; }
+.matchup-score {
+  font-size: 0.65rem; font-weight: 700; color: var(--cream);
+  background: rgba(255,255,255,0.08); border-radius: 3px;
+  padding: 3px 8px; text-align: center; white-space: nowrap;
+  min-width: 52px;
+}
+.matchup-score.pending {
+  color: rgba(248,245,238,0.2); background: rgba(255,255,255,0.03);
+  font-weight: 400; font-size: 0.6rem;
+}
+.lb-expand-btn {
+  width: 100%; padding: 8px; background: none;
+  border: none; border-top: 1px solid rgba(201,168,76,0.1);
+  color: rgba(248,245,238,0.3); font-size: 0.6rem;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  cursor: pointer; transition: color 0.2s;
+  font-family: 'Montserrat', sans-serif; font-weight: 600;
+}
+.lb-expand-btn:hover { color: var(--gold-light); }
+
+/* ── ADMIN TABS ── */
+.atab {
+  flex: 1; padding: 9px; background: none; border: none;
+  font-family: 'Montserrat', sans-serif; font-size: 0.68rem;
+  font-weight: 600; letter-spacing: 0.1em; cursor: pointer;
+  color: var(--text-light); transition: all 0.2s;
+}
+.atab-active { background: var(--forest-deep); color: var(--cream); }
+.artab {
+  padding: 6px 14px; background: none;
+  border: 1px solid var(--border); border-radius: 2px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.65rem;
+  font-weight: 600; cursor: pointer; color: var(--text-light);
+  transition: all 0.2s;
+}
+.artab-active { background: var(--forest-deep); color: var(--cream); border-color: var(--forest-deep); }
+.matchup-admin-row {
+  display: grid; grid-template-columns: 1fr auto auto auto 1fr;
+  gap: 6px; align-items: center; margin-bottom: 8px;
+}
+.matchup-admin-name {
+  font-size: 0.75rem; color: var(--text-mid); padding: 4px 0;
+}
+.matchup-admin-name.jake { text-align: right; }
+.matchup-admin-score {
+  width: 44px; padding: 6px 4px; text-align: center;
+  border: 1px solid var(--border); border-radius: 2px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.8rem;
+  background: var(--cream); color: var(--text);
+}
+.matchup-admin-sep {
+  font-size: 0.7rem; color: var(--text-light); padding: 0 2px;
+}
+.matchup-section-label {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--text-light);
+  margin: 14px 0 8px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--cream-dark);
+}
+
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
   /* Header */
@@ -707,6 +856,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
         <div class="series-label">Cup Wins</div>
       </div>
     </div>
+    <div id="live-leaderboard-wrap"></div>
     <div class="next-event" id="next-event">
       <div class="next-label">Next Event</div>
       <div class="next-title" id="next-title">4th Annual JP Ryder Cup</div>
@@ -780,44 +930,55 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 
 <!-- ADMIN PANEL MODAL -->
 <div class="modal-overlay" id="modal-admin">
-  <div class="modal" style="max-width:520px">
+  <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
     <h3>⛳ Admin Panel</h3>
-    <div style="font-size:0.7rem;color:var(--text-light);margin-bottom:16px;letter-spacing:0.05em">Update live scores — visible to all visitors in real time</div>
+    <div style="font-size:0.7rem;color:var(--text-light);margin-bottom:16px;letter-spacing:0.05em">Changes publish live in real time</div>
 
-    <label>Select Year</label>
-    <select id="admin-year">
-      <option value="2025">2025</option>
-      <option value="2024">2024</option>
-      <option value="2023">2023</option>
-    </select>
+    <!-- Tab switcher -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+      <button onclick="adminTab('live')" id="atab-live" class="atab atab-active">🏌️ Live 2026</button>
+      <button onclick="adminTab('settings')" id="atab-settings" class="atab">⚙️ Settings</button>
+    </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
-      <div>
-        <label>Jake's Team Score</label>
-        <input type="number" id="admin-jake-score" placeholder="e.g. 97" min="0" max="200">
+    <!-- LIVE TAB -->
+    <div id="admin-live-panel">
+      <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);margin-bottom:12px">Select Round</div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap" id="admin-round-tabs">
+        <button onclick="adminRound(0)" id="artab-0" class="artab artab-active">Round 1</button>
+        <button onclick="adminRound(1)" id="artab-1" class="artab">Round 2</button>
+        <button onclick="adminRound(2)" id="artab-2" class="artab">Round 3</button>
       </div>
-      <div>
-        <label>Travis's Team Score</label>
-        <input type="number" id="admin-travis-score" placeholder="e.g. 95" min="0" max="200">
+      <div id="admin-matchups-wrap"></div>
+      <div class="modal-btns" style="margin-top:16px">
+        <button class="btn-primary" onclick="saveLive()">Save & Publish</button>
+        <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
       </div>
     </div>
 
-    <label>Jake's Team Name (that year)</label>
-    <input type="text" id="admin-jake-team" placeholder="e.g. Team Old Crow">
+    <!-- SETTINGS TAB -->
+    <div id="admin-settings-panel" style="display:none">
+      <label>Select Year (for historical edits)</label>
+      <select id="admin-year">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+      </select>
 
-    <label>Travis's Team Name (that year)</label>
-    <input type="text" id="admin-travis-team" placeholder="e.g. Team Howie's">
-
-    <label>TS X Factor Winner</label>
-    <input type="text" id="admin-tsx" placeholder="e.g. Kevin Jean">
-
-    <label>Next Event Info</label>
-    <input type="text" id="admin-next-title" placeholder="e.g. 4th Annual JP Ryder Cup">
-    <input type="text" id="admin-next-details" placeholder="e.g. June 2026 · Location TBD" style="margin-top:6px">
-
-    <div class="modal-btns" style="margin-top:20px">
-      <button class="btn-primary" onclick="saveAdmin()">Save & Publish</button>
-      <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
+      <label>Jake's Team Name</label>
+      <input type="text" id="admin-jake-team" placeholder="e.g. Team Howie's">
+      <label>Travis's Team Name</label>
+      <input type="text" id="admin-travis-team" placeholder="e.g. Team Old Crow">
+      <label>TS X Factor Winner</label>
+      <input type="text" id="admin-tsx" placeholder="e.g. Kevin Jean">
+      <label>Next Event Title</label>
+      <input type="text" id="admin-next-title" placeholder="e.g. 4th Annual JP Ryder Cup">
+      <label>Next Event Details</label>
+      <input type="text" id="admin-next-details" placeholder="e.g. June 2026 · Location TBD" style="margin-top:6px">
+      <div class="modal-btns" style="margin-top:20px">
+        <button class="btn-primary" onclick="saveSettings()">Save & Publish</button>
+        <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
+      </div>
     </div>
   </div>
 </div>
@@ -838,7 +999,36 @@ const DEFAULT_DATA = {
     title: '4th Annual JP Ryder Cup',
     details: 'June 25–28, 2026 · Wisconsin Dells, WI\nReedsburg CC · Trappers Turn · Wild Rock Golf Club'
   },
+  liveYear: '2026',
   years: {
+    '2026': {
+      subtitle: '4th Annual · Wisconsin Dells, WI',
+      courses: 'Reedsburg CC · Trappers Turn · Wild Rock Golf Club',
+      dates: 'June 25–28, 2026',
+      jakeTeam: "Jake's Team",
+      travisTeam: "Travis's Team",
+      jakeWon: null,
+      tsxFactor: null,
+      jakePlayers: [],
+      travisPlayers: [],
+      rounds: [
+        {
+          name: 'Reedsburg CC',
+          format: 'Four Ball',
+          matchups: []
+        },
+        {
+          name: 'Trappers Turn',
+          format: 'Singles Match Play',
+          matchups: []
+        },
+        {
+          name: 'Wild Rock Golf Club',
+          format: 'Modified Alt Shot',
+          matchups: []
+        }
+      ]
+    },
     '2025': {
       subtitle: '3rd Annual · La Crosse, WI',
       courses: 'Fox Hollow & Forest Hills',
@@ -964,9 +1154,14 @@ async function loadData() {
 function applyRecord(r) {
   if (r.seriesWins) DB.seriesWins = r.seriesWins;
   if (r.nextEvent) DB.nextEvent = r.nextEvent;
+  if (r.liveYear) DB.liveYear = r.liveYear;
   if (r.years) {
     Object.keys(r.years).forEach(yr => {
-      if (DB.years[yr]) DB.years[yr] = Object.assign({}, DB.years[yr], r.years[yr]);
+      if (DB.years[yr]) {
+        DB.years[yr] = Object.assign({}, DB.years[yr], r.years[yr]);
+      } else {
+        DB.years[yr] = r.years[yr];
+      }
     });
   }
 }
@@ -1002,12 +1197,113 @@ function renderHome() {
   document.getElementById('next-title').textContent = DB.nextEvent.title;
   document.getElementById('next-details').innerHTML =
     (DB.nextEvent.details || '').replace(/\n/g, '<br>');
+  renderLiveLeaderboard();
+}
+
+function renderLiveLeaderboard() {
+  const wrap = document.getElementById('live-leaderboard-wrap');
+  const yr = DB.liveYear;
+  const d = DB.years[yr];
+  if (!d || !d.rounds) { wrap.innerHTML = ''; return; }
+
+  // Tally totals from matchup scores
+  let jakeTotal = 0, travisTotal = 0;
+  const roundSummaries = d.rounds.map((round, ri) => {
+    let jakeRound = 0, travisRound = 0;
+    (round.matchups || []).forEach(m => {
+      if (m.jakeScore !== null && m.jakeScore !== undefined) jakeRound += Number(m.jakeScore);
+      if (m.travisScore !== null && m.travisScore !== undefined) travisRound += Number(m.travisScore);
+    });
+    jakeTotal += jakeRound;
+    travisTotal += travisRound;
+    const hasScores = (round.matchups || []).some(m => m.jakeScore !== null && m.jakeScore !== undefined);
+    return { name: round.name, format: round.format, jakeRound, travisRound, hasScores, matchups: round.matchups || [] };
+  });
+
+  const jakeLeading = jakeTotal > travisTotal;
+  const tied = jakeTotal === travisTotal;
+  const hasAnyScore = roundSummaries.some(r => r.hasScores);
+
+  const roundsHTML = roundSummaries.map((r, i) => {
+    if (!r.hasScores) {
+      return `<div class="lb-round-row">
+        <div class="lb-round-pending">—</div>
+        <div class="lb-round-name">${r.name}<br><span style="font-size:0.58rem;opacity:0.6">${r.format}</span></div>
+        <div class="lb-round-pending">—</div>
+      </div>`;
+    }
+    const jWin = r.jakeRound > r.travisRound;
+    const tWin = r.travisRound > r.jakeRound;
+    return `<div class="lb-round-row">
+      <div class="lb-round-score ${jWin?'leading':''}">${r.jakeRound}</div>
+      <div class="lb-round-name">${r.name}<br><span style="font-size:0.58rem;opacity:0.6">${r.format}</span></div>
+      <div class="lb-round-score ${tWin?'leading':''}">${r.travisRound}</div>
+    </div>`;
+  }).join('');
+
+  // Build matchup detail rows (collapsed by default)
+  let matchupSections = '';
+  roundSummaries.forEach((r, ri) => {
+    if (!r.hasScores || !r.matchups.length) return;
+    const rows = r.matchups.map(m => {
+      if (m.jakeScore === null || m.jakeScore === undefined) return '';
+      const jWin = Number(m.jakeScore) > Number(m.travisScore);
+      const tWin = Number(m.travisScore) > Number(m.jakeScore);
+      return `<div class="matchup-row">
+        <div class="matchup-player jake ${jWin?'winner':''}">${m.jakeName || '—'}</div>
+        <div class="matchup-score">${m.jakeScore}–${m.travisScore}</div>
+        <div class="matchup-player travis ${tWin?'winner':''}">${m.travisName || '—'}</div>
+      </div>`;
+    }).filter(Boolean).join('');
+    if (rows) {
+      matchupSections += `<div style="margin-bottom:12px">
+        <div class="lb-matchups-title">${r.name}</div>
+        ${rows}
+      </div>`;
+    }
+  });
+
+  const statusText = hasAnyScore
+    ? (tied ? 'All Square' : `${jakeLeading ? d.jakeTeam : d.travisTeam} leads`)
+    : 'Upcoming';
+
+  wrap.innerHTML = `
+  <div class="live-leaderboard">
+    <div class="lb-header">
+      <div class="lb-header-title">🏆 ${yr} Live Scoreboard</div>
+      <div class="lb-status">${statusText}</div>
+    </div>
+    <div class="lb-teams">
+      <div class="lb-team jake">
+        <div class="lb-team-name">${d.jakeTeam}</div>
+        <div class="lb-team-score ${!tied && jakeLeading ? 'leading' : ''}">${jakeTotal}</div>
+      </div>
+      <div class="lb-sep">pts</div>
+      <div class="lb-team travis">
+        <div class="lb-team-name">${d.travisTeam}</div>
+        <div class="lb-team-score ${!tied && !jakeLeading ? 'leading' : ''}">${travisTotal}</div>
+      </div>
+    </div>
+    <div class="lb-rounds">${roundsHTML}</div>
+    ${matchupSections ? `
+    <div id="lb-matchup-detail" style="display:none">
+      <div class="lb-matchups">${matchupSections}</div>
+    </div>
+    <button class="lb-expand-btn" onclick="toggleLbMatchups(this)">▼ Show Matchups</button>` : ''}
+  </div>`;
+}
+
+function toggleLbMatchups(btn) {
+  const detail = document.getElementById('lb-matchup-detail');
+  const showing = detail.style.display !== 'none';
+  detail.style.display = showing ? 'none' : 'block';
+  btn.textContent = showing ? '▼ Show Matchups' : '▲ Hide Matchups';
 }
 
 // ── RENDER HISTORY ──
 function renderHistory() {
   const el = document.getElementById('history-content');
-  const years = ['2025','2024','2023'];
+  const years = ['2026','2025','2024','2023'];
   el.innerHTML = years.map(yr => buildYearCard(yr)).join('');
 }
 
@@ -1020,8 +1316,79 @@ function formatHdcp(h) {
 function buildYearCard(yr) {
   const d = DB.years[yr];
   if (!d) return '';
+
+  // ── ROUNDS-BASED YEAR (2026+) ──
+  if (d.rounds) {
+    let jakeTotal = 0, travisTotal = 0;
+    const roundRows = (d.rounds || []).map(r => {
+      let jr = 0, tr = 0;
+      (r.matchups || []).forEach(m => {
+        if (m.jakeScore != null) jr += Number(m.jakeScore);
+        if (m.travisScore != null) tr += Number(m.travisScore);
+      });
+      jakeTotal += jr;
+      travisTotal += tr;
+      const hasScores = (r.matchups || []).some(m => m.jakeScore != null);
+      const matchupRows = hasScores ? (r.matchups || []).filter(m => m.jakeScore != null).map(m => {
+        const jWin = Number(m.jakeScore) > Number(m.travisScore);
+        const tWin = Number(m.travisScore) > Number(m.jakeScore);
+        return `<div class="matchup-row">
+          <div class="matchup-player jake ${jWin?'winner':''}">${m.jakeName}</div>
+          <div class="matchup-score">${m.jakeScore}–${m.travisScore}</div>
+          <div class="matchup-player travis ${tWin?'winner':''}">${m.travisName}</div>
+        </div>`;
+      }).join('') : `<div style="font-size:0.72rem;color:var(--text-light);padding:6px 0">No scores yet</div>`;
+
+      return `<div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cream-dark)">
+          <span style="font-size:0.8rem;font-weight:700;color:var(--forest-deep)">${r.name}</span>
+          <span style="font-size:0.62rem;color:var(--text-light);letter-spacing:0.1em;text-transform:uppercase">${r.format}</span>
+          ${hasScores ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-mid)">${jr} – ${tr}</span>` : '<span style="font-size:0.65rem;color:var(--text-light)">Upcoming</span>'}
+        </div>
+        ${matchupRows}
+      </div>`;
+    }).join('');
+
+    const isLive = d.jakeWon === null;
+    const jLeading = jakeTotal > travisTotal;
+    const headerBadge = isLive
+      ? `<div class="winner-badge" style="background:rgba(201,168,76,0.2);color:var(--gold)">🏌️ In Progress</div>`
+      : `<div class="winner-badge">🏆 ${d.jakeWon ? d.jakeTeam : d.travisTeam}</div>`;
+
+    return `
+    <div class="year-card">
+      <div class="year-card-header">
+        <div>
+          <div class="year-card-title">${yr} JP Ryder Cup</div>
+          <div class="year-card-sub">${d.subtitle}</div>
+        </div>
+        ${headerBadge}
+      </div>
+      <div class="year-card-body">
+        <div class="year-info-row">
+          <div class="year-info-item"><strong>Courses</strong>${d.courses}</div>
+          <div class="year-info-item"><strong>Dates</strong>${d.dates}</div>
+          <div class="year-info-item"><strong>Handicap</strong>80%</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+          <div style="padding:14px;text-align:center;background:rgba(45,74,62,0.07)">
+            <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--jake);margin-bottom:4px">Jake · ${d.jakeTeam}</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:${!isLive&&d.jakeWon?'var(--gold)':jLeading?'var(--forest-deep)':'var(--text-mid)'}">${jakeTotal}</div>
+          </div>
+          <div style="display:flex;align-items:center;padding:0 12px;color:var(--border);font-size:0.8rem;border-left:1px solid var(--border);border-right:1px solid var(--border)">pts</div>
+          <div style="padding:14px;text-align:center;background:rgba(139,46,46,0.05)">
+            <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--travis);margin-bottom:4px">Travis · ${d.travisTeam}</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:${!isLive&&!d.jakeWon?'var(--gold)':!jLeading&&travisTotal>0?'var(--forest-deep)':'var(--text-mid)'}">${travisTotal}</div>
+          </div>
+        </div>
+        ${roundRows}
+      </div>
+    </div>`;
+  }
+
+  // ── LEGACY YEAR (2023–2025) ──
   const winner = d.jakeWon ? d.jakeTeam : d.travisTeam;
-  const scoreHTML = (d.jakeScore !== null && d.travisScore !== null) ? `
+  const scoreHTML = (d.jakeScore !== null && d.jakeScore !== undefined && d.travisScore !== null) ? `
     <div class="score-display">
       <div class="score-team">
         <div class="score-team-name">${d.jakeTeam}</div>
@@ -1035,11 +1402,11 @@ function buildYearCard(yr) {
     </div>` : '';
 
   const tsxWinner = d.tsxFactor || null;
-  const jakeList = d.jakePlayers.map(p => {
+  const jakeList = (d.jakePlayers || []).map(p => {
     const badge = tsxWinner === p.name ? `<span class="tsx-badge">⚡ TS X Factor</span>` : '';
     return `<li class="player-item"><span><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button>${badge}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`;
   }).join('');
-  const travisList = d.travisPlayers.map(p => {
+  const travisList = (d.travisPlayers || []).map(p => {
     const badge = tsxWinner === p.name ? `<span class="tsx-badge">⚡ TS X Factor</span>` : '';
     return `<li class="player-item"><span><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button>${badge}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`;
   }).join('');
@@ -1085,13 +1452,13 @@ function buildYearCard(yr) {
 function openPlayerModal(name) {
   // Build full history for this player across all years
   const history = [];
-  ['2023','2024','2025'].forEach(yr => {
+  ['2023','2024','2025','2026'].forEach(yr => {
     const d = DB.years[yr];
     if (!d) return;
-    const onJake = d.jakePlayers.find(p => p.name === name);
-    const onTravis = d.travisPlayers.find(p => p.name === name);
+    const onJake = (d.jakePlayers||[]).find(p => p.name === name);
+    const onTravis = (d.travisPlayers||[]).find(p => p.name === name);
     if (onJake) history.push({ yr, team: d.jakeTeam, captain: 'jake', won: d.jakeWon });
-    if (onTravis) history.push({ yr, team: d.travisTeam, captain: 'travis', won: !d.jakeWon });
+    if (onTravis) history.push({ yr, team: d.travisTeam, captain: 'travis', won: d.jakeWon === false });
   });
 
   const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
@@ -1120,7 +1487,7 @@ function openPlayerModal(name) {
 
   // Check if player has won TS X Factor in any year
   const tsxYears = [];
-  ['2023','2024','2025'].forEach(yr => {
+  ['2023','2024','2025','2026'].forEach(yr => {
     if (DB.years[yr] && DB.years[yr].tsxFactor === name) tsxYears.push(yr);
   });
 
@@ -1159,8 +1526,9 @@ const MAX_GALLERY_PROBE = 30; // max images to attempt per year
 
 function renderGallery() {
   const el = document.getElementById('gallery-content');
-  const years = ['2025','2024','2023'];
+  const years = ['2026','2025','2024','2023'];
   const yearLabels = {
+    '2026': '4th Annual · Wisconsin Dells, WI',
     '2025': '3rd Annual · La Crosse, WI',
     '2024': '2nd Annual · Green Bay, WI',
     '2023': '1st Annual · Madison, WI'
@@ -1315,6 +1683,8 @@ document.addEventListener('keydown', e => {
 });
 
 // ── ADMIN ──
+let _adminRound = 0;
+
 function openAdmin() { document.getElementById('modal-login').classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
@@ -1330,59 +1700,135 @@ function checkAdminPassword() {
 }
 
 function openAdminPanel() {
-  const yr = document.getElementById('admin-year').value || '2025';
+  adminTab('live');
+  adminRound(0);
+  document.getElementById('modal-admin').classList.add('open');
+}
+
+function adminTab(tab) {
+  document.getElementById('admin-live-panel').style.display = tab === 'live' ? 'block' : 'none';
+  document.getElementById('admin-settings-panel').style.display = tab === 'settings' ? 'block' : 'none';
+  document.getElementById('atab-live').className = 'atab' + (tab === 'live' ? ' atab-active' : '');
+  document.getElementById('atab-settings').className = 'atab' + (tab === 'settings' ? ' atab-active' : '');
+  if (tab === 'settings') loadSettingsPanel();
+}
+
+function adminRound(ri) {
+  _adminRound = ri;
+  [0,1,2].forEach(i => {
+    document.getElementById('artab-' + i).className = 'artab' + (i === ri ? ' artab-active' : '');
+  });
+  renderAdminMatchups(ri);
+}
+
+function renderAdminMatchups(ri) {
+  const yr = DB.liveYear || '2026';
+  const d = DB.years[yr];
+  if (!d || !d.rounds) return;
+  const round = d.rounds[ri];
+  const wrap = document.getElementById('admin-matchups-wrap');
+
+  const jakeTeam = d.jakeTeam || "Jake's Team";
+  const travisTeam = d.travisTeam || "Travis's Team";
+
+  // Show team name header + format
+  let html = `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;margin-bottom:12px;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase">
+    <div style="text-align:right;color:var(--jake)">${jakeTeam}</div>
+    <div style="color:var(--text-light)">${round.format}</div>
+    <div style="color:var(--travis)">${travisTeam}</div>
+  </div>`;
+
+  const matchups = round.matchups || [];
+
+  if (matchups.length === 0) {
+    html += `<div style="text-align:center;color:var(--text-light);font-size:0.75rem;padding:16px 0">
+      No matchups set yet. Add pairings below.
+    </div>`;
+  } else {
+    html += matchups.map((m, mi) => `
+      <div class="matchup-admin-row">
+        <div class="matchup-admin-name jake">${m.jakeName}</div>
+        <input class="matchup-admin-score" type="number" min="0" max="18"
+          id="ms-jake-${ri}-${mi}" value="${m.jakeScore !== null && m.jakeScore !== undefined ? m.jakeScore : ''}"
+          placeholder="–">
+        <div class="matchup-admin-sep">–</div>
+        <input class="matchup-admin-score" type="number" min="0" max="18"
+          id="ms-travis-${ri}-${mi}" value="${m.travisScore !== null && m.travisScore !== undefined ? m.travisScore : ''}"
+          placeholder="–">
+        <div class="matchup-admin-name">${m.travisName}</div>
+      </div>`).join('');
+  }
+
+  // Add pairing inputs
+  html += `<div class="matchup-section-label">Add / Edit Pairing</div>
+  <div style="display:grid;grid-template-columns:1fr 20px 1fr;gap:6px;margin-bottom:8px">
+    <input type="text" id="new-jake-name" placeholder="${jakeTeam} player"
+      style="padding:7px 8px;border:1px solid var(--border);border-radius:2px;font-size:0.78rem;font-family:'Montserrat',sans-serif;background:var(--cream)">
+    <div style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-light)">vs</div>
+    <input type="text" id="new-travis-name" placeholder="${travisTeam} player"
+      style="padding:7px 8px;border:1px solid var(--border);border-radius:2px;font-size:0.78rem;font-family:'Montserrat',sans-serif;background:var(--cream)">
+  </div>
+  <button onclick="addMatchup(${ri})" style="width:100%;padding:8px;background:var(--forest-deep);color:var(--cream);border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.7rem;font-weight:600;cursor:pointer;letter-spacing:0.1em">+ Add Pairing</button>`;
+
+  wrap.innerHTML = html;
+}
+
+function addMatchup(ri) {
+  const jakeName = document.getElementById('new-jake-name').value.trim();
+  const travisName = document.getElementById('new-travis-name').value.trim();
+  if (!jakeName || !travisName) { showToast('Enter both player names'); return; }
+  const yr = DB.liveYear || '2026';
+  if (!DB.years[yr].rounds[ri].matchups) DB.years[yr].rounds[ri].matchups = [];
+  DB.years[yr].rounds[ri].matchups.push({ jakeName, travisName, jakeScore: null, travisScore: null });
+  renderAdminMatchups(ri);
+}
+
+async function saveLive() {
+  const yr = DB.liveYear || '2026';
+  const round = DB.years[yr].rounds[_adminRound];
+  const matchups = round.matchups || [];
+
+  matchups.forEach((m, mi) => {
+    const jv = document.getElementById(`ms-jake-${_adminRound}-${mi}`);
+    const tv = document.getElementById(`ms-travis-${_adminRound}-${mi}`);
+    if (jv && jv.value !== '') m.jakeScore = Number(jv.value);
+    if (tv && tv.value !== '') m.travisScore = Number(tv.value);
+  });
+
+  const ok = await saveData();
+  if (ok) {
+    localStorage.removeItem(CACHE_KEY);
+    showToast('✓ Saved & published!');
+    closeModal('modal-admin');
+    renderHome();
+  }
+}
+
+function loadSettingsPanel() {
+  const yr = document.getElementById('admin-year').value || '2026';
   const d = DB.years[yr] || {};
-  document.getElementById('admin-jake-score').value = d.jakeScore || '';
-  document.getElementById('admin-travis-score').value = d.travisScore || '';
   document.getElementById('admin-jake-team').value = d.jakeTeam || '';
   document.getElementById('admin-travis-team').value = d.travisTeam || '';
   document.getElementById('admin-tsx').value = d.tsxFactor || '';
   document.getElementById('admin-next-title').value = DB.nextEvent.title || '';
   document.getElementById('admin-next-details').value = DB.nextEvent.details || '';
-  document.getElementById('modal-admin').classList.add('open');
 }
 
-document.getElementById('admin-year').addEventListener('change', function() {
-  const yr = this.value;
-  const d = DB.years[yr] || {};
-  document.getElementById('admin-jake-score').value = d.jakeScore || '';
-  document.getElementById('admin-travis-score').value = d.travisScore || '';
-  document.getElementById('admin-jake-team').value = d.jakeTeam || '';
-  document.getElementById('admin-travis-team').value = d.travisTeam || '';
-  document.getElementById('admin-tsx').value = d.tsxFactor || '';
-});
+document.getElementById('admin-year').addEventListener('change', loadSettingsPanel);
 
-async function saveAdmin() {
+async function saveSettings() {
   const yr = document.getElementById('admin-year').value;
-  const jakeScore = parseInt(document.getElementById('admin-jake-score').value) || null;
-  const travisScore = parseInt(document.getElementById('admin-travis-score').value) || null;
   const jakeTeam = document.getElementById('admin-jake-team').value.trim();
   const travisTeam = document.getElementById('admin-travis-team').value.trim();
-
   const tsx = document.getElementById('admin-tsx').value.trim();
+
   if (!DB.years[yr]) DB.years[yr] = {};
-  if (jakeScore !== null) DB.years[yr].jakeScore = jakeScore;
-  if (travisScore !== null) DB.years[yr].travisScore = travisScore;
   if (jakeTeam) DB.years[yr].jakeTeam = jakeTeam;
   if (travisTeam) DB.years[yr].travisTeam = travisTeam;
   if (tsx) DB.years[yr].tsxFactor = tsx;
-  if (jakeScore !== null && travisScore !== null) {
-    DB.years[yr].jakeWon = jakeScore > travisScore;
-  }
 
   DB.nextEvent.title = document.getElementById('admin-next-title').value.trim() || DB.nextEvent.title;
   DB.nextEvent.details = document.getElementById('admin-next-details').value.trim() || DB.nextEvent.details;
-
-  // Recalculate series wins
-  let jakeW = 0, travisW = 0;
-  Object.values(DB.years).forEach(y => {
-    if (y.jakeScore !== null && y.travisScore !== null) {
-      if (y.jakeWon) jakeW++; else travisW++;
-    }
-  });
-  // Keep manual override if scores not all filled
-  DB.seriesWins.jake = jakeW || DB.seriesWins.jake;
-  DB.seriesWins.travis = travisW || DB.seriesWins.travis;
 
   const ok = await saveData();
   if (ok) {
