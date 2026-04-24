@@ -557,13 +557,72 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
-  .header-inner { padding: 0 12px; }
-  .site-title { font-size: 1.2rem; }
-  .logo-wrap img { height: 40px; width: 40px; }
-  nav button { padding: 18px 10px; font-size: 0.62rem; }
-  .series-board { grid-template-columns: 1fr; }
-  .series-mid { padding: 12px; border: none; border-top: 1px solid rgba(201,168,76,0.2); border-bottom: 1px solid rgba(201,168,76,0.2); flex-direction: row; gap: 12px; }
-  .year-info-row { gap: 16px; }
+  /* Header */
+  .header-inner { padding: 0 10px; gap: 6px; }
+  .site-title { font-size: 1.1rem; }
+  .logo-wrap img { height: 36px; width: 36px; }
+  .logo-wrap { gap: 8px; }
+  nav button { padding: 16px 8px; font-size: 0.58rem; letter-spacing: 0.1em; }
+  .live-indicator { display: none; }
+  .admin-btn { font-size: 0.58rem; padding: 6px 9px; }
+
+  /* Hero */
+  .hero { padding: 36px 16px 32px; }
+  .hero-logo { height: 72px; width: 72px; }
+  .hero-title { font-size: 2.2rem; }
+  .hero-sub { font-size: 0.65rem; }
+
+  /* Series board - stack vertically */
+  .series-board { grid-template-columns: 1fr; max-width: 100%; }
+  .series-side { padding: 20px 16px; }
+  .series-wins { font-size: 2.4rem; }
+  .series-mid {
+    padding: 10px 16px; border: none;
+    border-top: 1px solid rgba(201,168,76,0.2);
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    flex-direction: row; gap: 12px; justify-content: center;
+  }
+
+  /* Next event */
+  .next-event { padding: 20px 16px; margin-top: 20px; }
+  .next-title { font-size: 1.2rem; }
+
+  /* Page wrap */
+  .page-wrap { padding: 24px 14px 60px; }
+  .section-header h2 { font-size: 1.6rem; }
+
+  /* Year cards */
+  .year-card-header { padding: 16px 18px; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .year-card-title { font-size: 1.3rem; }
+  .year-card-body { padding: 18px; }
+  .year-info-row { gap: 12px; flex-direction: column; margin-bottom: 16px; padding-bottom: 16px; }
+  .teams-grid { grid-template-columns: 1fr; gap: 20px; }
+  .score-display { flex-direction: column; gap: 8px; }
+  .score-sep { display: none; }
+  .score-pts { font-size: 2rem; }
+
+  /* Gallery */
+  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .gallery-grid.collapsed { max-height: calc((150px * 0.75 * 2) + 8px); }
+  .gallery-year-title { font-size: 1.2rem; }
+
+  /* Lightbox arrows */
+  #lightbox-prev, #lightbox-next { width: 40px; height: 40px; }
+  #lightbox img { max-width: 92vw; max-height: 80vh; }
+
+  /* Modals */
+  .modal { padding: 24px 18px; }
+  .modal h3 { font-size: 1.3rem; }
+
+  /* Player modal */
+  .player-modal-name { font-size: 1.3rem; }
+}
+
+@media(max-width:380px){
+  nav button { padding: 14px 6px; font-size: 0.54rem; }
+  .hero-title { font-size: 1.8rem; }
+  .site-title { font-size: 1rem; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
