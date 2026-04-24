@@ -570,6 +570,23 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 .tag-jake { background: rgba(45,74,62,0.12); color: var(--jake); }
 .tag-travis { background: rgba(139,46,46,0.1); color: var(--travis); }
 
+.tsx-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 2px;
+  background: linear-gradient(135deg, #c9a84c, #e8cc7a);
+  color: var(--forest-deep); white-space: nowrap;
+  margin-left: 4px; vertical-align: middle;
+}
+.tsx-badge-modal {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 2px;
+  background: linear-gradient(135deg, #c9a84c, #e8cc7a);
+  color: var(--forest-deep); margin: 0 auto 16px;
+}
+.tsx-modal-wrap { text-align: center; }
+
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
   /* Header */
@@ -723,7 +740,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 <!-- PLAYER CARD MODAL -->
 <div class="modal-overlay" id="modal-player">
   <div class="modal" style="max-width:380px">
-    <div class="player-modal-photo">
+    <div class="player-modal-photo" id="pmodal-photo-wrap" style="cursor:default">
       <img id="pmodal-photo" src="" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
       <span id="pmodal-placeholder">⛳</span>
     </div>
@@ -791,6 +808,9 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
     <label>Travis's Team Name (that year)</label>
     <input type="text" id="admin-travis-team" placeholder="e.g. Team Howie's">
 
+    <label>TS X Factor Winner</label>
+    <input type="text" id="admin-tsx" placeholder="e.g. Kevin Jean">
+
     <label>Next Event Info</label>
     <input type="text" id="admin-next-title" placeholder="e.g. 4th Annual JP Ryder Cup">
     <input type="text" id="admin-next-details" placeholder="e.g. June 2026 · Location TBD" style="margin-top:6px">
@@ -828,6 +848,7 @@ const DEFAULT_DATA = {
       jakeWon: true,
       jakeScore: 97,
       travisScore: 95,
+      tsxFactor: 'Kevin Jean',
       jakePlayers: [
         {name:'Blake Jens',hdcp:0},{name:'Danny Hooten',hdcp:0},{name:'Kevin Jean',hdcp:5},
         {name:'Jordan Recker',hdcp:12},{name:'Jake Raffel',hdcp:15},{name:'Joey Recker',hdcp:15},
@@ -1013,12 +1034,15 @@ function buildYearCard(yr) {
       </div>
     </div>` : '';
 
-  const jakeList = d.jakePlayers.map(p =>
-    `<li class="player-item"><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
-  ).join('');
-  const travisList = d.travisPlayers.map(p =>
-    `<li class="player-item"><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`
-  ).join('');
+  const tsxWinner = d.tsxFactor || null;
+  const jakeList = d.jakePlayers.map(p => {
+    const badge = tsxWinner === p.name ? `<span class="tsx-badge">⚡ TS X Factor</span>` : '';
+    return `<li class="player-item"><span><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button>${badge}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`;
+  }).join('');
+  const travisList = d.travisPlayers.map(p => {
+    const badge = tsxWinner === p.name ? `<span class="tsx-badge">⚡ TS X Factor</span>` : '';
+    return `<li class="player-item"><span><button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button>${badge}</span><span class="player-hdcp">${formatHdcp(p.hdcp)}</span></li>`;
+  }).join('');
 
   return `
   <div class="year-card">
@@ -1075,6 +1099,7 @@ function openPlayerModal(name) {
 
   const photoEl = document.getElementById('pmodal-photo');
   const placeholderEl = document.getElementById('pmodal-placeholder');
+  const photoWrap = document.getElementById('pmodal-photo-wrap');
   photoEl.style.display = 'block';
   placeholderEl.style.display = 'none';
   photoEl.src = `${GITHUB_BASE}players/${slug}.jpg`;
@@ -1084,19 +1109,45 @@ function openPlayerModal(name) {
     } else {
       photoEl.style.display='none';
       placeholderEl.style.display='block';
+      photoWrap.style.cursor = 'default';
+      photoWrap.onclick = null;
     }
   };
+  photoEl.onload = () => {
+    photoWrap.style.cursor = 'zoom-in';
+    photoWrap.onclick = () => openPhotoLightbox(photoEl.src);
+  };
+
+  // Check if player has won TS X Factor in any year
+  const tsxYears = [];
+  ['2023','2024','2025'].forEach(yr => {
+    if (DB.years[yr] && DB.years[yr].tsxFactor === name) tsxYears.push(yr);
+  });
 
   document.getElementById('pmodal-name').textContent = name;
   document.getElementById('pmodal-appearances').textContent =
     `${history.length} appearance${history.length !== 1 ? 's' : ''}`;
 
-  document.getElementById('pmodal-years').innerHTML = history.map(h => `
-    <div class="player-modal-year-row">
+  // Show TS X Factor badge if applicable
+  const tsxEl = document.getElementById('pmodal-tsx');
+  if (tsxEl) tsxEl.remove();
+  if (tsxYears.length > 0) {
+    const badge = document.createElement('div');
+    badge.id = 'pmodal-tsx';
+    badge.className = 'tsx-modal-wrap';
+    badge.innerHTML = `<span class="tsx-badge-modal">⚡ TS X Factor · ${tsxYears.join(', ')}</span>`;
+    document.getElementById('pmodal-appearances').after(badge);
+  }
+
+  document.getElementById('pmodal-years').innerHTML = history.map(h => {
+    const tsx = DB.years[h.yr] && DB.years[h.yr].tsxFactor === name
+      ? ` <span class="tsx-badge">⚡ TSX</span>` : '';
+    return `<div class="player-modal-year-row">
       <span class="player-modal-yr">${h.yr}</span>
-      <span class="player-modal-team">${h.team}</span>
+      <span class="player-modal-team">${h.team}${tsx}</span>
       <span class="player-modal-result ${h.won ? 'result-win' : 'result-loss'}">${h.won ? 'Won' : 'Lost'}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   document.getElementById('modal-player').classList.add('open');
 }
@@ -1218,6 +1269,14 @@ function loadGalleryYear(yr) {
 let _lbUrls = [];
 let _lbIdx = 0;
 
+function openPhotoLightbox(src) {
+  closeModal('modal-player');
+  _lbUrls = [src];
+  _lbIdx = 0;
+  showLightboxImage();
+  document.getElementById('lightbox').classList.add('open');
+}
+
 function openLightbox(yr, idx) {
   const section = document.getElementById('gallery-yr-' + yr);
   _lbUrls = section._photoUrls || [];
@@ -1277,6 +1336,7 @@ function openAdminPanel() {
   document.getElementById('admin-travis-score').value = d.travisScore || '';
   document.getElementById('admin-jake-team').value = d.jakeTeam || '';
   document.getElementById('admin-travis-team').value = d.travisTeam || '';
+  document.getElementById('admin-tsx').value = d.tsxFactor || '';
   document.getElementById('admin-next-title').value = DB.nextEvent.title || '';
   document.getElementById('admin-next-details').value = DB.nextEvent.details || '';
   document.getElementById('modal-admin').classList.add('open');
@@ -1289,6 +1349,7 @@ document.getElementById('admin-year').addEventListener('change', function() {
   document.getElementById('admin-travis-score').value = d.travisScore || '';
   document.getElementById('admin-jake-team').value = d.jakeTeam || '';
   document.getElementById('admin-travis-team').value = d.travisTeam || '';
+  document.getElementById('admin-tsx').value = d.tsxFactor || '';
 });
 
 async function saveAdmin() {
@@ -1298,11 +1359,13 @@ async function saveAdmin() {
   const jakeTeam = document.getElementById('admin-jake-team').value.trim();
   const travisTeam = document.getElementById('admin-travis-team').value.trim();
 
+  const tsx = document.getElementById('admin-tsx').value.trim();
   if (!DB.years[yr]) DB.years[yr] = {};
   if (jakeScore !== null) DB.years[yr].jakeScore = jakeScore;
   if (travisScore !== null) DB.years[yr].travisScore = travisScore;
   if (jakeTeam) DB.years[yr].jakeTeam = jakeTeam;
   if (travisTeam) DB.years[yr].travisTeam = travisTeam;
+  if (tsx) DB.years[yr].tsxFactor = tsx;
   if (jakeScore !== null && travisScore !== null) {
     DB.years[yr].jakeWon = jakeScore > travisScore;
   }
