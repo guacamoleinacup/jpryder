@@ -1628,6 +1628,9 @@ function buildYearCard(yr) {
             <div class="team-block-name">${d.jakeTeam}</div>
             <span class="team-captain-tag captain-jake">Jake</span>
           </div>
+          <li class="player-item" style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);padding:5px 0;cursor:default">
+            <span>Player</span><span>HDCP</span>
+          </li>
           <ul class="player-list">${jakeList}</ul>
         </div>
         <div class="team-block">
@@ -1635,6 +1638,9 @@ function buildYearCard(yr) {
             <div class="team-block-name">${d.travisTeam}</div>
             <span class="team-captain-tag captain-travis">Travis</span>
           </div>
+          <li class="player-item" style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);padding:5px 0;cursor:default">
+            <span>Player</span><span>HDCP</span>
+          </li>
           <ul class="player-list">${travisList}</ul>
         </div>
       </div>
@@ -1757,12 +1763,13 @@ function initNomState() {
   const d = DB.years[yr];
   if (!d) return null;
 
+  const hasPool = (d.playerPool||[]).length > 0;
   const jakeDrafted = (d.jakePlayers||[]).length;
   const travisDrafted = (d.travisPlayers||[]).length;
   const hasDraft = jakeDrafted > 0 || travisDrafted > 0;
 
-  // If draft has happened, show current state
-  if (hasDraft) {
+  // Only treat as drafted if pool was set AND draft happened
+  if (hasPool && hasDraft) {
     return {
       yr,
       pool: [],
@@ -1775,7 +1782,7 @@ function initNomState() {
     };
   }
 
-  // Pre-draft: pull from playerPool
+  // Pre-draft: show pool if set, otherwise empty
   const pool = [...(d.playerPool || [])];
   return {
     yr,
@@ -2060,7 +2067,9 @@ function loadGalleryYear(yr) {
 
     const items = urls.map((url, idx) =>
       `<div class="gallery-item" onclick="openLightbox('${yr}',${idx})">
-        <img src="${url}" alt="photo">
+        <img src="${url}" alt="photo" style="transition:opacity 0.3s"
+          onload="this.style.opacity=1"
+          onerror="this.style.display='none';this.parentElement.style.cursor='default';this.parentElement.onclick=null;this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>Unavailable</p></div>'">
       </div>`
     ).join('');
 
@@ -2111,7 +2120,11 @@ function openLightbox(yr, idx) {
 }
 
 function showLightboxImage() {
-  document.getElementById('lightbox-img').src = _lbUrls[_lbIdx];
+  const img = document.getElementById('lightbox-img');
+  img.style.opacity = '0';
+  img.onload = () => { img.style.opacity = '1'; img.style.transition = 'opacity 0.25s'; };
+  img.onerror = () => { img.style.opacity = '0.3'; };
+  img.src = _lbUrls[_lbIdx];
   document.getElementById('lightbox-counter').textContent =
     `${_lbIdx + 1} / ${_lbUrls.length}`;
   document.getElementById('lightbox-prev').style.visibility = _lbIdx > 0 ? 'visible' : 'hidden';
@@ -2127,6 +2140,9 @@ function lightboxNav(dir) {
 }
 
 function closeLightbox() {
+  const img = document.getElementById('lightbox-img');
+  img.src = '';
+  img.style.opacity = '1';
   document.getElementById('lightbox').classList.remove('open');
 }
 document.getElementById('lightbox').addEventListener('click', e => {
