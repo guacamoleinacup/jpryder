@@ -969,6 +969,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <input type="text" id="admin-jake-team" placeholder="e.g. Team Howie's">
       <label>Travis's Team Name</label>
       <input type="text" id="admin-travis-team" placeholder="e.g. Team Old Crow">
+      <div id="admin-roster-section"></div>
       <label>TS X Factor Winner</label>
       <input type="text" id="admin-tsx" placeholder="e.g. Kevin Jean">
       <label>Next Event Title</label>
@@ -1014,18 +1015,21 @@ const DEFAULT_DATA = {
       rounds: [
         {
           name: 'Reedsburg CC',
-          format: 'Four Ball',
-          matchups: []
+          format: 'Modified Alt Shot',
+          multiplier: 0.5,
+          scores: {}
         },
         {
           name: 'Trappers Turn',
-          format: 'Singles Match Play',
-          matchups: []
+          format: '2-Man Best Ball',
+          multiplier: 0.5,
+          scores: {}
         },
         {
           name: 'Wild Rock Golf Club',
-          format: 'Modified Alt Shot',
-          matchups: []
+          format: 'Singles Match Play',
+          multiplier: 1,
+          scores: {}
         }
       ]
     },
@@ -1200,68 +1204,83 @@ function renderHome() {
   renderLiveLeaderboard();
 }
 
+function calcScores(d) {
+  // Returns { jakeTeam, travisTeam, players: {name: {jake:bool, pts, roundPts:[...]}}}
+  const players = {};
+  const allPlayers = [
+    ...(d.jakePlayers||[]).map(p => ({...p, side:'jake'})),
+    ...(d.travisPlayers||[]).map(p => ({...p, side:'travis'}))
+  ];
+  allPlayers.forEach(p => {
+    players[p.name] = { side: p.side, totalPts: 0, roundPts: [] };
+  });
+
+  let jakeTeam = 0, travisTeam = 0;
+
+  (d.rounds||[]).forEach((round, ri) => {
+    const mult = round.multiplier !== undefined ? round.multiplier : (ri < 2 ? 0.5 : 1);
+    const scores = round.scores || {};
+    let jakeRoundTeam = 0, travisRoundTeam = 0;
+
+    allPlayers.forEach(p => {
+      const raw = scores[p.name] !== undefined ? Number(scores[p.name]) : null;
+      const pts = raw !== null ? raw * mult : null;
+      if (!players[p.name]) players[p.name] = { side: p.side, totalPts: 0, roundPts: [] };
+      players[p.name].roundPts.push({ raw, pts, round: round.name, mult });
+      if (pts !== null) {
+        players[p.name].totalPts += pts;
+        if (p.side === 'jake') jakeRoundTeam += pts;
+        else travisRoundTeam += pts;
+      }
+    });
+
+    jakeTeam += jakeRoundTeam;
+    travisTeam += travisRoundTeam;
+  });
+
+  return { jakeTeam, travisTeam, players };
+}
+
 function renderLiveLeaderboard() {
   const wrap = document.getElementById('live-leaderboard-wrap');
   const yr = DB.liveYear;
   const d = DB.years[yr];
   if (!d || !d.rounds) { wrap.innerHTML = ''; return; }
 
-  // Tally totals from matchup scores
-  let jakeTotal = 0, travisTotal = 0;
-  const roundSummaries = d.rounds.map((round, ri) => {
-    let jakeRound = 0, travisRound = 0;
-    (round.matchups || []).forEach(m => {
-      if (m.jakeScore !== null && m.jakeScore !== undefined) jakeRound += Number(m.jakeScore);
-      if (m.travisScore !== null && m.travisScore !== undefined) travisRound += Number(m.travisScore);
-    });
-    jakeTotal += jakeRound;
-    travisTotal += travisRound;
-    const hasScores = (round.matchups || []).some(m => m.jakeScore !== null && m.jakeScore !== undefined);
-    return { name: round.name, format: round.format, jakeRound, travisRound, hasScores, matchups: round.matchups || [] };
-  });
+  const { jakeTeam, travisTeam, players } = calcScores(d);
+  const hasAnyScore = Object.values(players).some(p => p.roundPts.some(r => r.raw !== null));
+  const jakeLeading = jakeTeam > travisTeam;
+  const tied = jakeTeam === travisTeam;
 
-  const jakeLeading = jakeTotal > travisTotal;
-  const tied = jakeTotal === travisTotal;
-  const hasAnyScore = roundSummaries.some(r => r.hasScores);
-
-  const roundsHTML = roundSummaries.map((r, i) => {
-    if (!r.hasScores) {
-      return `<div class="lb-round-row">
-        <div class="lb-round-pending">—</div>
-        <div class="lb-round-name">${r.name}<br><span style="font-size:0.58rem;opacity:0.6">${r.format}</span></div>
-        <div class="lb-round-pending">—</div>
-      </div>`;
-    }
-    const jWin = r.jakeRound > r.travisRound;
-    const tWin = r.travisRound > r.jakeRound;
+  const roundRows = (d.rounds||[]).map((round, ri) => {
+    const mult = round.multiplier !== undefined ? round.multiplier : (ri < 2 ? 0.5 : 1);
+    const scores = round.scores || {};
+    let jr = 0, tr = 0, hasScore = false;
+    (d.jakePlayers||[]).forEach(p => { if (scores[p.name] !== undefined) { jr += Number(scores[p.name]) * mult; hasScore = true; }});
+    (d.travisPlayers||[]).forEach(p => { if (scores[p.name] !== undefined) { tr += Number(scores[p.name]) * mult; }});
+    const jWin = jr > tr, tWin = tr > jr;
     return `<div class="lb-round-row">
-      <div class="lb-round-score ${jWin?'leading':''}">${r.jakeRound}</div>
-      <div class="lb-round-name">${r.name}<br><span style="font-size:0.58rem;opacity:0.6">${r.format}</span></div>
-      <div class="lb-round-score ${tWin?'leading':''}">${r.travisRound}</div>
+      <div class="lb-round-score ${hasScore && jWin ? 'leading' : ''}">${hasScore ? jr.toFixed(1).replace('.0','') : '—'}</div>
+      <div class="lb-round-name">${round.name}<br><span style="font-size:0.58rem;opacity:0.6">${round.format}</span></div>
+      <div class="lb-round-score ${hasScore && tWin ? 'leading' : ''}">${hasScore ? tr.toFixed(1).replace('.0','') : '—'}</div>
     </div>`;
   }).join('');
 
-  // Build matchup detail rows (collapsed by default)
-  let matchupSections = '';
-  roundSummaries.forEach((r, ri) => {
-    if (!r.hasScores || !r.matchups.length) return;
-    const rows = r.matchups.map(m => {
-      if (m.jakeScore === null || m.jakeScore === undefined) return '';
-      const jWin = Number(m.jakeScore) > Number(m.travisScore);
-      const tWin = Number(m.travisScore) > Number(m.jakeScore);
-      return `<div class="matchup-row">
-        <div class="matchup-player jake ${jWin?'winner':''}">${m.jakeName || '—'}</div>
-        <div class="matchup-score">${m.jakeScore}–${m.travisScore}</div>
-        <div class="matchup-player travis ${tWin?'winner':''}">${m.travisName || '—'}</div>
-      </div>`;
-    }).filter(Boolean).join('');
-    if (rows) {
-      matchupSections += `<div style="margin-bottom:12px">
-        <div class="lb-matchups-title">${r.name}</div>
-        ${rows}
-      </div>`;
-    }
-  });
+  // Individual leaderboard — sort by total pts desc
+  const jakePlayers = Object.entries(players).filter(([,v]) => v.side==='jake').sort((a,b) => b[1].totalPts - a[1].totalPts);
+  const travisPlayers = Object.entries(players).filter(([,v]) => v.side==='travis').sort((a,b) => b[1].totalPts - a[1].totalPts);
+
+  const playerRows = (arr) => arr.map(([name, p]) => {
+    if (p.totalPts === 0 && p.roundPts.every(r => r.raw === null)) return '';
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.72rem">
+      <span style="color:rgba(248,245,238,0.7)">${name}</span>
+      <span style="font-weight:700;color:var(--gold-light)">${p.totalPts.toFixed(1).replace('.0','')}</span>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  const jakePlayerHTML = playerRows(jakePlayers);
+  const travisPlayerHTML = playerRows(travisPlayers);
+  const hasPlayerScores = jakePlayerHTML || travisPlayerHTML;
 
   const statusText = hasAnyScore
     ? (tied ? 'All Square' : `${jakeLeading ? d.jakeTeam : d.travisTeam} leads`)
@@ -1276,28 +1295,37 @@ function renderLiveLeaderboard() {
     <div class="lb-teams">
       <div class="lb-team jake">
         <div class="lb-team-name">${d.jakeTeam}</div>
-        <div class="lb-team-score ${!tied && jakeLeading ? 'leading' : ''}">${jakeTotal}</div>
+        <div class="lb-team-score ${!tied && jakeLeading ? 'leading' : ''}">${jakeTeam.toFixed(1).replace('.0','')}</div>
       </div>
       <div class="lb-sep">pts</div>
       <div class="lb-team travis">
         <div class="lb-team-name">${d.travisTeam}</div>
-        <div class="lb-team-score ${!tied && !jakeLeading ? 'leading' : ''}">${travisTotal}</div>
+        <div class="lb-team-score ${!tied && !jakeLeading ? 'leading' : ''}">${travisTeam.toFixed(1).replace('.0','')}</div>
       </div>
     </div>
-    <div class="lb-rounds">${roundsHTML}</div>
-    ${matchupSections ? `
-    <div id="lb-matchup-detail" style="display:none">
-      <div class="lb-matchups">${matchupSections}</div>
+    <div class="lb-rounds">${roundRows}</div>
+    ${hasPlayerScores ? `
+    <div id="lb-player-detail" style="display:none">
+      <div class="lb-matchups" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="lb-matchups-title">${d.jakeTeam}</div>
+          ${jakePlayerHTML || '<div style="font-size:0.7rem;color:rgba(248,245,238,0.3)">No scores yet</div>'}
+        </div>
+        <div>
+          <div class="lb-matchups-title">${d.travisTeam}</div>
+          ${travisPlayerHTML || '<div style="font-size:0.7rem;color:rgba(248,245,238,0.3)">No scores yet</div>'}
+        </div>
+      </div>
     </div>
-    <button class="lb-expand-btn" onclick="toggleLbMatchups(this)">▼ Show Matchups</button>` : ''}
+    <button class="lb-expand-btn" onclick="toggleLbPlayers(this)">▼ Individual Scores</button>` : ''}
   </div>`;
 }
 
-function toggleLbMatchups(btn) {
-  const detail = document.getElementById('lb-matchup-detail');
+function toggleLbPlayers(btn) {
+  const detail = document.getElementById('lb-player-detail');
   const showing = detail.style.display !== 'none';
   detail.style.display = showing ? 'none' : 'block';
-  btn.textContent = showing ? '▼ Show Matchups' : '▲ Hide Matchups';
+  btn.textContent = showing ? '▼ Individual Scores' : '▲ Hide Individual Scores';
 }
 
 // ── RENDER HISTORY ──
@@ -1319,25 +1347,28 @@ function buildYearCard(yr) {
 
   // ── ROUNDS-BASED YEAR (2026+) ──
   if (d.rounds) {
-    let jakeTotal = 0, travisTotal = 0;
-    const roundRows = (d.rounds || []).map(r => {
-      let jr = 0, tr = 0;
-      (r.matchups || []).forEach(m => {
-        if (m.jakeScore != null) jr += Number(m.jakeScore);
-        if (m.travisScore != null) tr += Number(m.travisScore);
-      });
-      jakeTotal += jr;
-      travisTotal += tr;
-      const hasScores = (r.matchups || []).some(m => m.jakeScore != null);
-      const matchupRows = hasScores ? (r.matchups || []).filter(m => m.jakeScore != null).map(m => {
-        const jWin = Number(m.jakeScore) > Number(m.travisScore);
-        const tWin = Number(m.travisScore) > Number(m.jakeScore);
-        return `<div class="matchup-row">
-          <div class="matchup-player jake ${jWin?'winner':''}">${m.jakeName}</div>
-          <div class="matchup-score">${m.jakeScore}–${m.travisScore}</div>
-          <div class="matchup-player travis ${tWin?'winner':''}">${m.travisName}</div>
-        </div>`;
-      }).join('') : `<div style="font-size:0.72rem;color:var(--text-light);padding:6px 0">No scores yet</div>`;
+    const { jakeTeam: jakeTotal, travisTeam: travisTotal, players } = calcScores(d);
+
+    const roundRows = (d.rounds||[]).map((r, ri) => {
+      const mult = r.multiplier !== undefined ? r.multiplier : (ri < 2 ? 0.5 : 1);
+      const scores = r.scores || {};
+      let jr = 0, tr = 0, hasScore = false;
+      (d.jakePlayers||[]).forEach(p => { if (scores[p.name] !== undefined) { jr += Number(scores[p.name]) * mult; hasScore = true; }});
+      (d.travisPlayers||[]).forEach(p => { if (scores[p.name] !== undefined) { tr += Number(scores[p.name]) * mult; }});
+
+      const playerRows = (players, side) => Object.entries(players)
+        .filter(([,v]) => v.side === side && v.roundPts[ri] && v.roundPts[ri].raw !== null)
+        .sort((a,b) => b[1].roundPts[ri].pts - a[1].roundPts[ri].pts)
+        .map(([name, v]) => {
+          const rp = v.roundPts[ri];
+          return `<div class="matchup-row">
+            <div class="matchup-player ${side}" style="text-align:${side==='jake'?'right':'left'}">${name}</div>
+            <div class="matchup-score">${rp.raw} <span style="font-size:0.6rem;opacity:0.6">×${mult}=${rp.pts}</span></div>
+          </div>`;
+        }).join('');
+
+      const jRows = playerRows(players, 'jake');
+      const tRows = playerRows(players, 'travis');
 
       return `<div style="margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);gap:8px">
@@ -1345,20 +1376,36 @@ function buildYearCard(yr) {
             <div style="font-size:0.8rem;font-weight:700;color:var(--forest-deep)">${r.name}</div>
             <div style="font-size:0.6rem;color:var(--text-light);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px">${r.format}</div>
           </div>
-          ${hasScores ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-mid);white-space:nowrap">${jr} – ${tr}</span>` : '<span style="font-size:0.65rem;color:var(--text-light);white-space:nowrap">Upcoming</span>'}
+          ${hasScore
+            ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-mid);white-space:nowrap">${jr.toFixed(1).replace('.0','')} – ${tr.toFixed(1).replace('.0','')}</span>`
+            : '<span style="font-size:0.65rem;color:var(--text-light);white-space:nowrap">Upcoming</span>'}
         </div>
-        ${matchupRows}
+        ${jRows || tRows ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${jRows ? `<div>${jRows}</div>` : '<div></div>'}${tRows ? `<div>${tRows}</div>` : '<div></div>'}</div>` : '<div style="font-size:0.72rem;color:var(--text-light)">No scores yet</div>'}
       </div>`;
     }).join('');
 
-    const isLive = d.jakeWon === null && (d.rounds || []).some(r => (r.matchups||[]).some(m => m.jakeScore != null));
+    const isLive = d.jakeWon === null && Object.values(players).some(p => p.roundPts.some(r => r.raw !== null));
     const isUpcoming = d.jakeWon === null && !isLive;
-    const jLeading = jakeTotal > travisTotal;
     const headerBadge = isUpcoming
       ? `<div class="winner-badge" style="background:rgba(201,168,76,0.15);color:var(--gold)">📅 Upcoming</div>`
       : isLive
       ? `<div class="winner-badge" style="background:rgba(201,168,76,0.2);color:var(--gold)">🏌️ In Progress</div>`
       : `<div class="winner-badge">🏆 ${d.jakeWon ? d.jakeTeam : d.travisTeam}</div>`;
+
+    // Individual leaderboard for history card
+    const allPlayersSorted = Object.entries(players)
+      .filter(([,v]) => v.totalPts > 0)
+      .sort((a,b) => b[1].totalPts - a[1].totalPts);
+
+    const indivHTML = allPlayersSorted.length ? `
+      <div style="margin-top:20px;border-top:1px solid var(--cream-dark);padding-top:16px">
+        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px">Individual Leaderboard</div>
+        ${allPlayersSorted.map(([name,v],i) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:0.78rem">
+            <span style="color:var(--text-mid)">${i+1}. ${name}</span>
+            <span style="font-weight:700;color:var(--forest-deep)">${v.totalPts.toFixed(1).replace('.0','')}</span>
+          </div>`).join('')}
+      </div>` : '';
 
     return `
     <div class="year-card">
@@ -1378,15 +1425,16 @@ function buildYearCard(yr) {
         <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
           <div style="padding:14px;text-align:center;background:rgba(45,74,62,0.07)">
             <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--jake);margin-bottom:4px">Jake · ${d.jakeTeam}</div>
-            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:${!isLive&&d.jakeWon?'var(--gold)':jLeading?'var(--forest-deep)':'var(--text-mid)'}">${jakeTotal}</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:var(--forest-deep)">${jakeTotal.toFixed(1).replace('.0','')}</div>
           </div>
           <div style="display:flex;align-items:center;padding:0 12px;color:var(--border);font-size:0.8rem;border-left:1px solid var(--border);border-right:1px solid var(--border)">pts</div>
           <div style="padding:14px;text-align:center;background:rgba(139,46,46,0.05)">
             <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--travis);margin-bottom:4px">Travis · ${d.travisTeam}</div>
-            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:${!isLive&&!d.jakeWon?'var(--gold)':!jLeading&&travisTotal>0?'var(--forest-deep)':'var(--text-mid)'}">${travisTotal}</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:var(--forest-deep)">${travisTotal.toFixed(1).replace('.0','')}</div>
           </div>
         </div>
         ${roundRows}
+        ${indivHTML}
       </div>
     </div>`;
   }
@@ -1732,72 +1780,68 @@ function renderAdminMatchups(ri) {
   if (!d || !d.rounds) return;
   const round = d.rounds[ri];
   const wrap = document.getElementById('admin-matchups-wrap');
+  const mult = round.multiplier !== undefined ? round.multiplier : (ri < 2 ? 0.5 : 1);
+  const scores = round.scores || {};
 
   const jakeTeam = d.jakeTeam || "Jake's Team";
   const travisTeam = d.travisTeam || "Travis's Team";
 
-  // Show team name header + format
-  let html = `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;margin-bottom:12px;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase">
-    <div style="text-align:right;color:var(--jake)">${jakeTeam}</div>
-    <div style="color:var(--text-light)">${round.format}</div>
-    <div style="color:var(--travis)">${travisTeam}</div>
-  </div>`;
-
-  const matchups = round.matchups || [];
-
-  if (matchups.length === 0) {
-    html += `<div style="text-align:center;color:var(--text-light);font-size:0.75rem;padding:16px 0">
-      No matchups set yet. Add pairings below.
-    </div>`;
-  } else {
-    html += matchups.map((m, mi) => `
-      <div class="matchup-admin-row">
-        <div class="matchup-admin-name jake">${m.jakeName}</div>
-        <input class="matchup-admin-score" type="number" min="0" max="18"
-          id="ms-jake-${ri}-${mi}" value="${m.jakeScore !== null && m.jakeScore !== undefined ? m.jakeScore : ''}"
-          placeholder="–">
-        <div class="matchup-admin-sep">–</div>
-        <input class="matchup-admin-score" type="number" min="0" max="18"
-          id="ms-travis-${ri}-${mi}" value="${m.travisScore !== null && m.travisScore !== undefined ? m.travisScore : ''}"
-          placeholder="–">
-        <div class="matchup-admin-name">${m.travisName}</div>
+  const playerInputs = (players, side, color) => {
+    if (!players || players.length === 0) {
+      return `<div style="font-size:0.72rem;color:var(--text-light);padding:8px 0">
+        No players set. Add players in Settings tab first.
+      </div>`;
+    }
+    return players.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:0.78rem;color:var(--text-mid)">${p.name}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input class="matchup-admin-score" type="number" min="0" max="18"
+            id="score-${side}-${p.name.replace(/\s+/g,'_')}"
+            value="${scores[p.name] !== undefined ? scores[p.name] : ''}"
+            placeholder="0–18">
+          <span style="font-size:0.65rem;color:var(--text-light)">×${mult}</span>
+        </div>
       </div>`).join('');
-  }
+  };
 
-  // Add pairing inputs
-  html += `<div class="matchup-section-label">Add / Edit Pairing</div>
-  <div style="display:grid;grid-template-columns:1fr 20px 1fr;gap:6px;margin-bottom:8px">
-    <input type="text" id="new-jake-name" placeholder="${jakeTeam} player"
-      style="padding:7px 8px;border:1px solid var(--border);border-radius:2px;font-size:0.78rem;font-family:'Montserrat',sans-serif;background:var(--cream)">
-    <div style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-light)">vs</div>
-    <input type="text" id="new-travis-name" placeholder="${travisTeam} player"
-      style="padding:7px 8px;border:1px solid var(--border);border-radius:2px;font-size:0.78rem;font-family:'Montserrat',sans-serif;background:var(--cream)">
-  </div>
-  <button onclick="addMatchup(${ri})" style="width:100%;padding:8px;background:var(--forest-deep);color:var(--cream);border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.7rem;font-weight:600;cursor:pointer;letter-spacing:0.1em">+ Add Pairing</button>`;
-
-  wrap.innerHTML = html;
+  wrap.innerHTML = `
+    <div style="font-size:0.65rem;color:var(--text-light);margin-bottom:12px;padding:8px;background:var(--cream);border-radius:3px;border:1px solid var(--border)">
+      Enter each player's raw holes won (0–18). Site auto-applies ×${mult} multiplier for team total.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div class="matchup-section-label" style="color:var(--jake)">${jakeTeam}</div>
+        ${playerInputs(d.jakePlayers, 'jake', 'jake')}
+      </div>
+      <div>
+        <div class="matchup-section-label" style="color:var(--travis)">${travisTeam}</div>
+        ${playerInputs(d.travisPlayers, 'travis', 'travis')}
+      </div>
+    </div>`;
 }
 
 function addMatchup(ri) {
-  const jakeName = document.getElementById('new-jake-name').value.trim();
-  const travisName = document.getElementById('new-travis-name').value.trim();
-  if (!jakeName || !travisName) { showToast('Enter both player names'); return; }
-  const yr = DB.liveYear || '2026';
-  if (!DB.years[yr].rounds[ri].matchups) DB.years[yr].rounds[ri].matchups = [];
-  DB.years[yr].rounds[ri].matchups.push({ jakeName, travisName, jakeScore: null, travisScore: null });
-  renderAdminMatchups(ri);
+  // No longer used — kept for safety
 }
 
 async function saveLive() {
   const yr = DB.liveYear || '2026';
-  const round = DB.years[yr].rounds[_adminRound];
-  const matchups = round.matchups || [];
+  const d = DB.years[yr];
+  const round = d.rounds[_adminRound];
+  if (!round.scores) round.scores = {};
 
-  matchups.forEach((m, mi) => {
-    const jv = document.getElementById(`ms-jake-${_adminRound}-${mi}`);
-    const tv = document.getElementById(`ms-travis-${_adminRound}-${mi}`);
-    if (jv && jv.value !== '') m.jakeScore = Number(jv.value);
-    if (tv && tv.value !== '') m.travisScore = Number(tv.value);
+  const allPlayers = [
+    ...(d.jakePlayers||[]).map(p => ({...p, side:'jake'})),
+    ...(d.travisPlayers||[]).map(p => ({...p, side:'travis'}))
+  ];
+
+  allPlayers.forEach(p => {
+    const key = `score-${p.side}-${p.name.replace(/\s+/g,'_')}`;
+    const el = document.getElementById(key);
+    if (el && el.value !== '') {
+      round.scores[p.name] = Number(el.value);
+    }
   });
 
   const ok = await saveData();
@@ -1817,6 +1861,26 @@ function loadSettingsPanel() {
   document.getElementById('admin-tsx').value = d.tsxFactor || '';
   document.getElementById('admin-next-title').value = DB.nextEvent.title || '';
   document.getElementById('admin-next-details').value = DB.nextEvent.details || '';
+
+  // Show roster inputs only for live year
+  const rosterSection = document.getElementById('admin-roster-section');
+  if (yr === DB.liveYear) {
+    const jakeNames = (d.jakePlayers||[]).map(p=>p.name).join('\n');
+    const travisNames = (d.travisPlayers||[]).map(p=>p.name).join('\n');
+    rosterSection.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+        <div>
+          <label>Jake's Players (one per line)</label>
+          <textarea id="admin-jake-players" rows="10" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${jakeNames}</textarea>
+        </div>
+        <div>
+          <label>Travis's Players (one per line)</label>
+          <textarea id="admin-travis-players" rows="10" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${travisNames}</textarea>
+        </div>
+      </div>`;
+  } else {
+    rosterSection.innerHTML = '';
+  }
 }
 
 document.getElementById('admin-year').addEventListener('change', loadSettingsPanel);
@@ -1826,11 +1890,27 @@ async function saveSettings() {
   const jakeTeam = document.getElementById('admin-jake-team').value.trim();
   const travisTeam = document.getElementById('admin-travis-team').value.trim();
   const tsx = document.getElementById('admin-tsx').value.trim();
+  const jakePlayers = document.getElementById('admin-jake-players') ?
+    document.getElementById('admin-jake-players').value.trim() : '';
+  const travisPlayers = document.getElementById('admin-travis-players') ?
+    document.getElementById('admin-travis-players').value.trim() : '';
 
   if (!DB.years[yr]) DB.years[yr] = {};
   if (jakeTeam) DB.years[yr].jakeTeam = jakeTeam;
   if (travisTeam) DB.years[yr].travisTeam = travisTeam;
   if (tsx) DB.years[yr].tsxFactor = tsx;
+
+  // Parse player rosters for live year
+  if (yr === DB.liveYear) {
+    if (jakePlayers) {
+      DB.years[yr].jakePlayers = jakePlayers.split('\n')
+        .map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}));
+    }
+    if (travisPlayers) {
+      DB.years[yr].travisPlayers = travisPlayers.split('\n')
+        .map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}));
+    }
+  }
 
   DB.nextEvent.title = document.getElementById('admin-next-title').value.trim() || DB.nextEvent.title;
   DB.nextEvent.details = document.getElementById('admin-next-details').value.trim() || DB.nextEvent.details;
