@@ -2050,6 +2050,7 @@ function loadGalleryYear(yr) {
       return;
     }
 
+    // urls is already in order (Promise.all preserves order), just filter nulls
     const section = document.getElementById('gallery-yr-' + yr);
     section._photoUrls = urls;
 
@@ -2109,7 +2110,9 @@ function showLightboxImage() {
   img.style.opacity = '0';
   img.onload = () => { img.style.opacity = '1'; img.style.transition = 'opacity 0.25s'; };
   img.onerror = () => { img.style.opacity = '0.3'; };
-  img.src = _lbUrls[_lbIdx];
+  // Append cache-buster to force Safari to re-fetch cleanly
+  const url = _lbUrls[_lbIdx];
+  img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
   document.getElementById('lightbox-counter').textContent =
     `${_lbIdx + 1} / ${_lbUrls.length}`;
   document.getElementById('lightbox-prev').style.visibility = _lbIdx > 0 ? 'visible' : 'hidden';
