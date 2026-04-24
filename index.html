@@ -133,6 +133,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
   margin: 24px auto;
   animation: fadeDown 0.7s 0.25s ease both;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeDown {
   from { opacity: 0; transform: translateY(-14px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -950,7 +951,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       </div>
       <div id="admin-matchups-wrap"></div>
       <div class="modal-btns" style="margin-top:16px">
-        <button class="btn-primary" onclick="saveLive()">Save & Publish</button>
+        <button id="save-live-btn" class="btn-primary" onclick="saveLive()">Save & Publish</button>
         <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
       </div>
     </div>
@@ -977,7 +978,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <label>Next Event Details</label>
       <input type="text" id="admin-next-details" placeholder="e.g. June 2026 · Location TBD" style="margin-top:6px">
       <div class="modal-btns" style="margin-top:20px">
-        <button class="btn-primary" onclick="saveSettings()">Save & Publish</button>
+        <button id="save-settings-btn" class="btn-primary" onclick="saveSettings()">Save & Publish</button>
         <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
       </div>
     </div>
@@ -1271,7 +1272,7 @@ function renderLiveLeaderboard() {
   const travisPlayers = Object.entries(players).filter(([,v]) => v.side==='travis').sort((a,b) => b[1].totalPts - a[1].totalPts);
 
   const playerRows = (arr) => arr.map(([name, p]) => {
-    if (p.totalPts === 0 && p.roundPts.every(r => r.raw === null)) return '';
+    if (p.roundPts.every(r => r.raw === null)) return ''; // only hide if NO rounds entered at all
     return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.72rem">
       <span style="color:rgba(248,245,238,0.7)">${name}</span>
       <span style="font-weight:700;color:var(--gold-light)">${p.totalPts.toFixed(1).replace('.0','')}</span>
@@ -1280,7 +1281,7 @@ function renderLiveLeaderboard() {
 
   const jakePlayerHTML = playerRows(jakePlayers);
   const travisPlayerHTML = playerRows(travisPlayers);
-  const hasPlayerScores = jakePlayerHTML || travisPlayerHTML;
+  const hasPlayerScores = hasAnyScore; // show as soon as any score exists
 
   const statusText = hasAnyScore
     ? (tied ? 'All Square' : `${jakeLeading ? d.jakeTeam : d.travisTeam} leads`)
@@ -1825,7 +1826,26 @@ function addMatchup(ri) {
   // No longer used — kept for safety
 }
 
+function setSaveBtn(id, state) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  if (state === 'saving') {
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px"><svg style="animation:spin 0.8s linear infinite" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Saving...</span>';
+  } else if (state === 'done') {
+    btn.disabled = false;
+    btn.innerHTML = '✓ Saved!';
+    btn.style.background = '#2d7a4a';
+    setTimeout(() => { btn.innerHTML = 'Save & Publish'; btn.style.background = ''; }, 2000);
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = 'Save & Publish';
+    btn.style.background = '';
+  }
+}
+
 async function saveLive() {
+  setSaveBtn('save-live-btn', 'saving');
   const yr = DB.liveYear || '2026';
   const d = DB.years[yr];
   const round = d.rounds[_adminRound];
@@ -1846,10 +1866,11 @@ async function saveLive() {
 
   const ok = await saveData();
   if (ok) {
+    setSaveBtn('save-live-btn', 'done');
     localStorage.removeItem(CACHE_KEY);
-    showToast('✓ Saved & published!');
-    closeModal('modal-admin');
-    renderHome();
+    setTimeout(() => { closeModal('modal-admin'); renderHome(); }, 1200);
+  } else {
+    setSaveBtn('save-live-btn', 'reset');
   }
 }
 
@@ -1886,6 +1907,7 @@ function loadSettingsPanel() {
 document.getElementById('admin-year').addEventListener('change', loadSettingsPanel);
 
 async function saveSettings() {
+  setSaveBtn('save-settings-btn', 'saving');
   const yr = document.getElementById('admin-year').value;
   const jakeTeam = document.getElementById('admin-jake-team').value.trim();
   const travisTeam = document.getElementById('admin-travis-team').value.trim();
@@ -1915,10 +1937,11 @@ async function saveSettings() {
 
   const ok = await saveData();
   if (ok) {
+    setSaveBtn('save-settings-btn', 'done');
     localStorage.removeItem(CACHE_KEY);
-    showToast('✓ Saved & published!');
-    closeModal('modal-admin');
-    renderHome();
+    setTimeout(() => { closeModal('modal-admin'); renderHome(); }, 1200);
+  } else {
+    setSaveBtn('save-settings-btn', 'reset');
   }
 }
 
