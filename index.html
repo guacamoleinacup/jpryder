@@ -1065,10 +1065,21 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <div id="admin-roster-section"></div>
       <label>TS X Factor Winner</label>
       <input type="text" id="admin-tsx" placeholder="e.g. Kevin Jean">
-      <label>Next Event Title</label>
-      <input type="text" id="admin-next-title" placeholder="e.g. 4th Annual JP Ryder Cup">
-      <label>Next Event Details</label>
-      <input type="text" id="admin-next-details" placeholder="e.g. June 2026 · Location TBD" style="margin-top:6px">
+      <label>Year Winner</label>
+      <select id="admin-year-winner">
+        <option value="">— In Progress —</option>
+        <option value="jake">Jake's Team</option>
+        <option value="travis">Travis's Team</option>
+      </select>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px">Home Page — Upcoming Event Card</div>
+        <label>Event Title</label>
+        <input type="text" id="admin-next-title" placeholder="e.g. 5th Annual JP Ryder Cup">
+        <label>Event Details</label>
+        <input type="text" id="admin-next-details" placeholder="e.g. June 2027 · Location TBD" style="margin-top:6px">
+      </div>
+
       <div class="modal-btns" style="margin-top:20px">
         <button id="save-settings-btn" class="btn-primary" onclick="saveSettings()">Save & Publish</button>
         <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
@@ -2272,6 +2283,8 @@ function loadSettingsPanel() {
   document.getElementById('admin-jake-team').value = d.jakeTeam || '';
   document.getElementById('admin-travis-team').value = d.travisTeam || '';
   document.getElementById('admin-tsx').value = d.tsxFactor || '';
+  const winnerSel = document.getElementById('admin-year-winner');
+  winnerSel.value = d.jakeWon === true ? 'jake' : d.jakeWon === false ? 'travis' : '';
   document.getElementById('admin-next-title').value = DB.nextEvent.title || '';
   document.getElementById('admin-next-details').value = DB.nextEvent.details || '';
 
@@ -2314,6 +2327,10 @@ async function saveSettings() {
   if (jakeTeam) DB.years[yr].jakeTeam = jakeTeam;
   if (travisTeam) DB.years[yr].travisTeam = travisTeam;
   if (tsx) DB.years[yr].tsxFactor = tsx;
+  const yearWinner = document.getElementById('admin-year-winner').value;
+  if (yearWinner === 'jake') { DB.years[yr].jakeWon = true; DB.seriesWins.jake = Object.values(DB.years).filter(y=>y.jakeWon===true).length; DB.seriesWins.travis = Object.values(DB.years).filter(y=>y.jakeWon===false).length; }
+  else if (yearWinner === 'travis') { DB.years[yr].jakeWon = false; DB.seriesWins.jake = Object.values(DB.years).filter(y=>y.jakeWon===true).length; DB.seriesWins.travis = Object.values(DB.years).filter(y=>y.jakeWon===false).length; }
+  else { DB.years[yr].jakeWon = null; }
 
   const parseRoster = (text) => text
     ? text.split('\n').map(line => {
