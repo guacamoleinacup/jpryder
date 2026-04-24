@@ -1361,32 +1361,43 @@ function buildYearCard(yr) {
       let jr = 0, tr = 0, hasScore = false;
       (d.jakePlayers||[]).forEach(p => { if (scores[p.name] !== undefined) { jr += Number(scores[p.name]) * mult; hasScore = true; }});
       (d.travisPlayers||[]).forEach(p => { if (scores[p.name] !== undefined) { tr += Number(scores[p.name]) * mult; }});
+      const jWin = jr > tr, tWin = tr > jr;
 
-      const playerRows = (players, side) => Object.entries(players)
-        .filter(([,v]) => v.side === side && v.roundPts[ri] && v.roundPts[ri].raw !== null)
-        .sort((a,b) => b[1].roundPts[ri].pts - a[1].roundPts[ri].pts)
-        .map(([name, v]) => {
-          const rp = v.roundPts[ri];
-          return `<div class="matchup-row">
-            <div class="matchup-player ${side}" style="text-align:${side==='jake'?'right':'left'}">${name}</div>
-            <div class="matchup-score">${rp.raw} <span style="font-size:0.6rem;opacity:0.6">×${mult}=${rp.pts}</span></div>
-          </div>`;
+      // Player score rows — compact two-column table
+      const jakePRows = Object.entries(players)
+        .filter(([,v]) => v.side==='jake' && v.roundPts[ri] && v.roundPts[ri].raw !== null)
+        .sort((a,b) => b[1].roundPts[ri].pts - a[1].roundPts[ri].pts);
+      const travisPRows = Object.entries(players)
+        .filter(([,v]) => v.side==='travis' && v.roundPts[ri] && v.roundPts[ri].raw !== null)
+        .sort((a,b) => b[1].roundPts[ri].pts - a[1].roundPts[ri].pts);
+
+      const maxRows = Math.max(jakePRows.length, travisPRows.length);
+      let playerTable = '';
+      if (maxRows > 0) {
+        const rows = Array.from({length: maxRows}, (_, i) => {
+          const j = jakePRows[i];
+          const t = travisPRows[i];
+          return `<tr>
+            <td style="padding:3px 6px 3px 0;font-size:0.72rem;color:var(--text-mid);white-space:nowrap">${j ? j[0].split(' ')[0] : ''}</td>
+            <td style="padding:3px 8px;font-size:0.72rem;font-weight:700;color:var(--forest-deep);text-align:center;white-space:nowrap">${j ? j[1].roundPts[ri].raw + '<span style="font-size:0.58rem;color:var(--text-light);font-weight:400"> ('+j[1].roundPts[ri].pts.toFixed(1).replace('.0','')+')</span>' : ''}</td>
+            <td style="padding:3px 0 3px 8px;font-size:0.72rem;color:var(--text-mid);text-align:right;white-space:nowrap">${t ? t[0].split(' ')[0] : ''}</td>
+            <td style="padding:3px 0 3px 8px;font-size:0.72rem;font-weight:700;color:var(--forest-deep);text-align:center;white-space:nowrap">${t ? t[1].roundPts[ri].raw + '<span style="font-size:0.58rem;color:var(--text-light);font-weight:400"> ('+t[1].roundPts[ri].pts.toFixed(1).replace('.0','')+')</span>' : ''}</td>
+          </tr>`;
         }).join('');
+        playerTable = `<table style="width:100%;border-collapse:collapse;margin-top:8px">${rows}</table>`;
+      }
 
-      const jRows = playerRows(players, 'jake');
-      const tRows = playerRows(players, 'travis');
-
-      return `<div style="margin-bottom:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--cream-dark);gap:8px">
+      return `<div style="margin-bottom:0;padding:12px 0;border-bottom:1px solid var(--cream-dark)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
           <div>
-            <div style="font-size:0.8rem;font-weight:700;color:var(--forest-deep)">${r.name}</div>
-            <div style="font-size:0.6rem;color:var(--text-light);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px">${r.format}</div>
+            <span style="font-size:0.82rem;font-weight:700;color:var(--forest-deep)">${r.name}</span>
+            <span style="font-size:0.6rem;color:var(--text-light);letter-spacing:0.08em;text-transform:uppercase;margin-left:8px">${r.format}</span>
           </div>
           ${hasScore
-            ? `<span style="font-size:0.78rem;font-weight:700;color:var(--text-mid);white-space:nowrap">${jr.toFixed(1).replace('.0','')} – ${tr.toFixed(1).replace('.0','')}</span>`
-            : '<span style="font-size:0.65rem;color:var(--text-light);white-space:nowrap">Upcoming</span>'}
+            ? `<span style="font-size:0.85rem;font-weight:700;color:${jWin?'var(--jake)':tWin?'var(--travis)':'var(--text-mid)'};white-space:nowrap">${jr.toFixed(1).replace('.0','')} – ${tr.toFixed(1).replace('.0','')}</span>`
+            : '<span style="font-size:0.62rem;color:var(--text-light);white-space:nowrap;background:var(--cream-dark);padding:2px 8px;border-radius:10px">Upcoming</span>'}
         </div>
-        ${jRows || tRows ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${jRows ? `<div>${jRows}</div>` : '<div></div>'}${tRows ? `<div>${tRows}</div>` : '<div></div>'}</div>` : '<div style="font-size:0.72rem;color:var(--text-light)">No scores yet</div>'}
+        ${playerTable}
       </div>`;
     }).join('');
 
@@ -1398,19 +1409,34 @@ function buildYearCard(yr) {
       ? `<div class="winner-badge" style="background:rgba(201,168,76,0.2);color:var(--gold)">🏌️ In Progress</div>`
       : `<div class="winner-badge">🏆 ${d.jakeWon ? d.jakeTeam : d.travisTeam}</div>`;
 
-    // Individual leaderboard for history card
-    const allPlayersSorted = Object.entries(players)
-      .filter(([,v]) => v.totalPts > 0)
-      .sort((a,b) => b[1].totalPts - a[1].totalPts);
+    // Individual leaderboard — two columns side by side
+    const jakeSorted = Object.entries(players).filter(([,v]) => v.side==='jake' && v.roundPts.some(r=>r.raw!==null)).sort((a,b)=>b[1].totalPts-a[1].totalPts);
+    const travisSorted = Object.entries(players).filter(([,v]) => v.side==='travis' && v.roundPts.some(r=>r.raw!==null)).sort((a,b)=>b[1].totalPts-a[1].totalPts);
 
-    const indivHTML = allPlayersSorted.length ? `
-      <div style="margin-top:20px;border-top:1px solid var(--cream-dark);padding-top:16px">
-        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px">Individual Leaderboard</div>
-        ${allPlayersSorted.map(([name,v],i) => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:0.78rem">
-            <span style="color:var(--text-mid)">${i+1}. ${name}</span>
-            <span style="font-weight:700;color:var(--forest-deep)">${v.totalPts.toFixed(1).replace('.0','')}</span>
-          </div>`).join('')}
+    const indivCol = (arr) => arr.map(([name,v],i) => {
+      const raw = v.roundPts.reduce((s,r)=>s+(r.raw||0),0);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--cream-dark);font-size:0.75rem">
+        <span style="color:var(--text-mid)">${i+1}. ${name}</span>
+        <span style="font-weight:700;color:var(--forest-deep)">${v.totalPts.toFixed(1).replace('.0','')}<span style="font-size:0.62rem;color:var(--text-light);font-weight:400"> / ${raw}</span></span>
+      </div>`;
+    }).join('');
+
+    const jIndiv = indivCol(jakeSorted);
+    const tIndiv = indivCol(travisSorted);
+
+    const indivHTML = (jIndiv || tIndiv) ? `
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--cream-dark)">
+        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px">Individual Leaderboard <span style="font-weight:400;letter-spacing:0">(pts / raw)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:0.6rem;font-weight:700;color:var(--jake);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">${d.jakeTeam}</div>
+            ${jIndiv || '<div style="font-size:0.72rem;color:var(--text-light)">—</div>'}
+          </div>
+          <div>
+            <div style="font-size:0.6rem;font-weight:700;color:var(--travis);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">${d.travisTeam}</div>
+            ${tIndiv || '<div style="font-size:0.72rem;color:var(--text-light)">—</div>'}
+          </div>
+        </div>
       </div>` : '';
 
     return `
@@ -1428,18 +1454,18 @@ function buildYearCard(yr) {
           <div class="year-info-item"><strong>Dates</strong>${d.dates}</div>
           <div class="year-info-item"><strong>Handicap</strong>80%</div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
-          <div style="padding:14px;text-align:center;background:rgba(45,74,62,0.07)">
-            <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--jake);margin-bottom:4px">Jake · ${d.jakeTeam}</div>
-            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:var(--forest-deep)">${jakeTotal.toFixed(1).replace('.0','')}</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-bottom:0;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+          <div style="padding:12px 16px;text-align:center;background:rgba(45,74,62,0.07)">
+            <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--jake);margin-bottom:3px">Jake · ${d.jakeTeam}</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:1.8rem;font-weight:700;color:var(--forest-deep)">${jakeTotal.toFixed(1).replace('.0','')}</div>
           </div>
-          <div style="display:flex;align-items:center;padding:0 12px;color:var(--border);font-size:0.8rem;border-left:1px solid var(--border);border-right:1px solid var(--border)">pts</div>
-          <div style="padding:14px;text-align:center;background:rgba(139,46,46,0.05)">
-            <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--travis);margin-bottom:4px">Travis · ${d.travisTeam}</div>
-            <div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:700;color:var(--forest-deep)">${travisTotal.toFixed(1).replace('.0','')}</div>
+          <div style="display:flex;align-items:center;padding:0 10px;color:var(--border);font-size:0.75rem;border-left:1px solid var(--border);border-right:1px solid var(--border)">pts</div>
+          <div style="padding:12px 16px;text-align:center;background:rgba(139,46,46,0.05)">
+            <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--travis);margin-bottom:3px">Travis · ${d.travisTeam}</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:1.8rem;font-weight:700;color:var(--forest-deep)">${travisTotal.toFixed(1).replace('.0','')}</div>
           </div>
         </div>
-        ${roundRows}
+        <div style="margin-top:16px">${roundRows}</div>
         ${indivHTML}
       </div>
     </div>`;
