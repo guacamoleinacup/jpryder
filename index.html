@@ -1778,11 +1778,17 @@ function initNomState() {
   const travisDrafted = (d.travisPlayers||[]).length;
   const hasDraft = jakeDrafted > 0 || travisDrafted > 0;
 
-  // Only treat as drafted if pool was set AND draft happened
-  if (hasPool && hasDraft) {
+  // Post-draft: teams have been assigned (via nominations complete)
+  if (hasDraft) {
+    // Remaining pool = players in playerPool not yet on either team
+    const assignedNames = new Set([
+      ...(d.jakePlayers||[]).map(p=>p.name),
+      ...(d.travisPlayers||[]).map(p=>p.name)
+    ]);
+    const remainingPool = (d.playerPool||[]).filter(p => !assignedNames.has(p.name));
     return {
       yr,
-      pool: [],
+      pool: remainingPool,
       jake: [...(d.jakePlayers||[])],
       travis: [...(d.travisPlayers||[])],
       jakeTeam: d.jakeTeam || "Jake's Team",
@@ -1792,11 +1798,10 @@ function initNomState() {
     };
   }
 
-  // Pre-draft: show pool if set, otherwise empty
-  const pool = [...(d.playerPool || [])];
+  // Pre-draft: no teams yet, show full pool
   return {
     yr,
-    pool,
+    pool: [...(d.playerPool || [])],
     jake: [],
     travis: [],
     jakeTeam: d.jakeTeam || "Jake's Team",
