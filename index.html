@@ -944,9 +944,18 @@ function loadGalleryYear(yr) {
 
   function probe(n) {
     const padded = String(n).padStart(2, '0');
-    // Try zero-padded first (2023-01.jpg), fall back to non-padded (2023-1.jpg)
-    const urlPadded = `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpg`;
-    const urlPlain  = `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpg`;
+    // All filename variants to try in order
+    const variants = [
+      `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpeg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpeg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpeg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpeg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpg`,
+    ];
+    let vi = 0;
     const img = new Image();
     probing++;
     img.onload = () => {
@@ -957,9 +966,9 @@ function loadGalleryYear(yr) {
       if (n < MAX_GALLERY_PROBE) probe(n + 1);
     };
     img.onerror = () => {
-      if (img.src === urlPadded) {
-        // Try non-padded fallback
-        img.src = urlPlain;
+      vi++;
+      if (vi < variants.length) {
+        img.src = variants[vi];
       } else {
         probing--;
         if (probing === 0 && loaded.length === 0) {
@@ -969,7 +978,7 @@ function loadGalleryYear(yr) {
         }
       }
     };
-    img.src = urlPadded;
+    img.src = variants[0];
   }
 
   function renderLoaded() {
