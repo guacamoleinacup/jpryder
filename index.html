@@ -737,6 +737,92 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
   border-bottom: 1px solid var(--cream-dark);
 }
 
+/* ── NOMINATIONS ── */
+.nom-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+.nom-header { text-align: center; margin-bottom: 32px; }
+.nom-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 700; color: var(--forest-deep); }
+.nom-header p { font-size: 0.75rem; color: var(--text-light); margin-top: 6px; letter-spacing: 0.05em; }
+
+.nom-pick-banner {
+  background: var(--forest-deep); border: 2px solid var(--gold);
+  border-radius: 4px; padding: 16px 24px; text-align: center;
+  margin-bottom: 28px;
+}
+.nom-pick-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 4px; }
+.nom-pick-name { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--cream); }
+.nom-pick-num { font-size: 0.68rem; color: rgba(248,245,238,0.45); margin-top: 2px; letter-spacing: 0.1em; }
+
+.nom-main { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+@media(max-width:768px) { .nom-main { grid-template-columns: 1fr; } }
+
+.nom-col-title {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 10px 14px; margin-bottom: 0;
+  border-radius: 3px 3px 0 0;
+}
+.nom-col-title.pool { background: var(--cream-dark); color: var(--text-light); }
+.nom-col-title.jake-col { background: var(--jake); color: var(--cream); }
+.nom-col-title.travis-col { background: var(--travis); color: var(--cream); }
+
+.nom-col-body {
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 3px 3px; min-height: 200px;
+  background: var(--white);
+}
+
+.nom-player-tile {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--cream-dark);
+  font-size: 0.82rem; color: var(--text-mid); cursor: pointer;
+  transition: background 0.15s;
+}
+.nom-player-tile:last-child { border-bottom: none; }
+.nom-player-tile:hover { background: var(--cream); }
+.nom-player-tile.just-picked { animation: pickFlash 1s ease; }
+@keyframes pickFlash {
+  0%   { background: rgba(201,168,76,0.35); }
+  100% { background: transparent; }
+}
+.nom-player-hdcp { font-size: 0.68rem; color: var(--text-light); background: var(--cream-dark); padding: 2px 8px; border-radius: 10px; }
+.nom-player-pick-btn {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 2px; border: none; cursor: pointer;
+  transition: all 0.15s;
+}
+.nom-player-pick-btn.jake { background: rgba(45,74,62,0.12); color: var(--jake); }
+.nom-player-pick-btn.jake:hover { background: var(--jake); color: var(--cream); }
+.nom-player-pick-btn.travis { background: rgba(139,46,46,0.1); color: var(--travis); }
+.nom-player-pick-btn.travis:hover { background: var(--travis); color: var(--cream); }
+.nom-player-remove { font-size: 0.7rem; color: var(--text-light); background: none; border: none; cursor: pointer; padding: 2px 6px; border-radius: 2px; }
+.nom-player-remove:hover { background: var(--cream-dark); color: var(--text-mid); }
+.nom-empty { padding: 24px 14px; font-size: 0.75rem; color: var(--text-light); text-align: center; font-style: italic; }
+
+/* Pairings */
+.nom-pairings { margin-top: 28px; }
+.nom-pairings-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 700; color: var(--forest-deep); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); }
+.nom-pairing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:600px) { .nom-pairing-grid { grid-template-columns: 1fr; } }
+.nom-pairing-card { background: var(--white); border: 1px solid var(--border); border-radius: 3px; padding: 14px 16px; }
+.nom-pairing-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; }
+.nom-pairing-selects { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.nom-pairing-selects select {
+  flex: 1; min-width: 100px; padding: 7px 8px;
+  border: 1px solid var(--border); border-radius: 2px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.75rem;
+  background: var(--cream); color: var(--text);
+}
+.nom-pairing-sep { font-size: 0.7rem; color: var(--text-light); }
+
+.nom-complete-btn {
+  width: 100%; margin-top: 32px; padding: 16px;
+  background: var(--forest-deep); color: var(--cream);
+  border: 2px solid var(--gold); border-radius: 4px;
+  font-family: 'Montserrat', sans-serif; font-size: 0.85rem;
+  font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+}
+.nom-complete-btn:hover { background: var(--forest-light); }
+
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
   /* Header */
@@ -819,6 +905,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
     <nav>
       <button class="active" onclick="showSection('home',this)">Home</button>
       <button onclick="showSection('history',this)">History</button>
+      <button onclick="showSection('nominations',this)">Nominations</button>
       <button onclick="showSection('gallery',this)">Gallery</button>
     </nav>
     <div style="display:flex;align-items:center;gap:12px">
@@ -875,6 +962,11 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
     </div>
     <div id="history-content"><div class="loading">Loading history...</div></div>
   </div>
+</div>
+
+<!-- NOMINATIONS -->
+<div id="sec-nominations" class="section">
+  <div id="nom-content"></div>
 </div>
 
 <!-- GALLERY -->
@@ -1110,6 +1202,7 @@ function showSection(id, btn) {
   document.getElementById('sec-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'history') renderHistory();
+  if (id === 'nominations') renderNominations();
   if (id === 'gallery') renderGallery();
 }
 
@@ -1548,8 +1641,8 @@ function openPlayerModal(name) {
     if (!d) return;
     const onJake = (d.jakePlayers||[]).find(p => p.name === name);
     const onTravis = (d.travisPlayers||[]).find(p => p.name === name);
-    if (onJake) history.push({ yr, team: d.jakeTeam, captain: 'jake', won: d.jakeWon });
-    if (onTravis) history.push({ yr, team: d.travisTeam, captain: 'travis', won: d.jakeWon === false });
+    if (onJake) history.push({ yr, team: d.jakeTeam, captain: 'jake', won: d.jakeWon === null ? null : d.jakeWon });
+    if (onTravis) history.push({ yr, team: d.travisTeam, captain: 'travis', won: d.jakeWon === null ? null : d.jakeWon === false });
   });
 
   const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
@@ -1643,6 +1736,223 @@ function openPlayerModal(name) {
   }).join('');
 
   document.getElementById('modal-player').classList.add('open');
+}
+
+// ── NOMINATIONS ──
+let _nomState = null; // local draft state, not saved until complete
+
+function initNomState() {
+  const yr = DB.liveYear || '2026';
+  const d = DB.years[yr];
+  if (!d) return null;
+
+  // Build full pool from Settings roster
+  const allPlayers = [
+    ...(d.jakePlayers||[]).map(p => ({...p, assigned: 'jake'})),
+    ...(d.travisPlayers||[]).map(p => ({...p, assigned: 'travis'}))
+  ];
+
+  // If no players assigned yet, treat everyone as pool
+  const hasAssigned = allPlayers.some(p => p.assigned);
+
+  // Start fresh draft state
+  return {
+    yr,
+    pool: allPlayers.filter(p => !p.assigned || allPlayers.length === 0).map(p => ({name: p.name, hdcp: p.hdcp})),
+    jake: (d.jakePlayers||[]).map(p => ({name: p.name, hdcp: p.hdcp})),
+    travis: (d.travisPlayers||[]).map(p => ({name: p.name, hdcp: p.hdcp})),
+    jakeTeam: d.jakeTeam || "Jake's Team",
+    travisTeam: d.travisTeam || "Travis's Team",
+    pickNum: (d.jakePlayers||[]).length + (d.travisPlayers||[]).length + 1,
+    pairings: d.rounds && d.rounds[0] ? (d.rounds[0].pairings || []) : [],
+    complete: false
+  };
+}
+
+function currentPicker(state) {
+  // Snake draft: pick 1=Jake, 2=Travis, 3=Travis, 4=Jake, 5=Jake, 6=Travis...
+  // Pattern: J T T J J T T J J...
+  const total = state.jake.length + state.travis.length;
+  const snakePos = total % 4; // 0=J,1=T,2=T,3=J
+  return (snakePos === 0 || snakePos === 3) ? 'jake' : 'travis';
+}
+
+function renderNominations() {
+  const yr = DB.liveYear || '2026';
+  const d = DB.years[yr];
+  if (!d) {
+    document.getElementById('nom-content').innerHTML = `<div class="nom-wrap"><div class="loading">No active year configured.</div></div>`;
+    return;
+  }
+
+  if (!_nomState) _nomState = initNomState();
+  const s = _nomState;
+
+  const picker = currentPicker(s);
+  const pickerName = picker === 'jake' ? s.jakeTeam : s.travisTeam;
+  const totalPicked = s.jake.length + s.travis.length;
+  const totalPlayers = totalPicked + s.pool.length;
+  const draftDone = s.pool.length === 0;
+
+  const pickBanner = !draftDone ? `
+    <div class="nom-pick-banner">
+      <div class="nom-pick-label">Now Selecting</div>
+      <div class="nom-pick-name" style="color:${picker==='jake'?'rgba(150,220,180,1)':'rgba(240,150,150,1)'}">${pickerName}</div>
+      <div class="nom-pick-num">Pick #${totalPicked + 1} of ${totalPlayers}</div>
+    </div>` : `
+    <div class="nom-pick-banner" style="border-color:var(--gold)">
+      <div class="nom-pick-label">Draft Complete</div>
+      <div class="nom-pick-name" style="font-size:1.2rem">Set Round 1 Pairings Below ↓</div>
+    </div>`;
+
+  const poolHTML = s.pool.length ? s.pool.map(p => `
+    <div class="nom-player-tile" id="pool-${p.name.replace(/\s/g,'_')}">
+      <span>${p.name}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
+        <button class="nom-player-pick-btn jake" onclick="nomPick('${p.name.replace(/'/g,"\\'")}','jake')">Jake</button>
+        <button class="nom-player-pick-btn travis" onclick="nomPick('${p.name.replace(/'/g,"\\'")}','travis')">Travis</button>
+      </div>
+    </div>`).join('') : `<div class="nom-empty">All players drafted</div>`;
+
+  const teamCol = (players, side, teamName) => players.length
+    ? players.map((p, i) => `
+      <div class="nom-player-tile" id="${side}-picked-${i}">
+        <span>${p.name}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
+          <button class="nom-player-remove" onclick="nomRemove('${p.name.replace(/'/g,"\\'")}','${side}')" title="Return to pool">↩</button>
+        </div>
+      </div>`).join('')
+    : `<div class="nom-empty">No players yet</div>`;
+
+  // Pairings for Round 1
+  const allJake = s.jake.map(p => p.name);
+  const allTravis = s.travis.map(p => p.name);
+  const numPairings = Math.max(1, Math.ceil(Math.min(allJake.length, allTravis.length) / 2));
+
+  const pairingCards = Array.from({length: numPairings}, (_, i) => {
+    const pair = s.pairings[i] || {};
+    const jOpts = allJake.map(n => `<option value="${n}" ${pair.jake1===n?'selected':''}>${n}</option>`).join('');
+    const j2Opts = ['<option value="">— optional —</option>', ...allJake.map(n => `<option value="${n}" ${pair.jake2===n?'selected':''}>${n}</option>`)].join('');
+    const tOpts = allTravis.map(n => `<option value="${n}" ${pair.travis1===n?'selected':''}>${n}</option>`).join('');
+    const t2Opts = ['<option value="">— optional —</option>', ...allTravis.map(n => `<option value="${n}" ${pair.travis2===n?'selected':''}>${n}</option>`)].join('');
+    return `
+    <div class="nom-pairing-card">
+      <div class="nom-pairing-label">Pairing ${i+1}</div>
+      <div class="nom-pairing-selects">
+        <select onchange="nomPairingChange(${i},'jake1',this.value)">${jOpts}</select>
+        <span class="nom-pairing-sep">&</span>
+        <select onchange="nomPairingChange(${i},'jake2',this.value)">${j2Opts}</select>
+        <span class="nom-pairing-sep">vs</span>
+        <select onchange="nomPairingChange(${i},'travis1',this.value)">${tOpts}</select>
+        <span class="nom-pairing-sep">&</span>
+        <select onchange="nomPairingChange(${i},'travis2',this.value)">${t2Opts}</select>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('nom-content').innerHTML = `
+  <div class="nom-wrap">
+    <div class="nom-header">
+      <h2>Nominations Night</h2>
+      <p>${yr} JP Ryder Cup · ${d.subtitle || ''}</p>
+    </div>
+    ${pickBanner}
+    <div class="nom-main">
+      <div>
+        <div class="nom-col-title pool">Available Players (${s.pool.length})</div>
+        <div class="nom-col-body">${poolHTML}</div>
+      </div>
+      <div>
+        <div class="nom-col-title jake-col">${s.jakeTeam} — Jake (${s.jake.length})</div>
+        <div class="nom-col-body">${teamCol(s.jake,'jake',s.jakeTeam)}</div>
+      </div>
+      <div>
+        <div class="nom-col-title travis-col">${s.travisTeam} — Travis (${s.travis.length})</div>
+        <div class="nom-col-body">${teamCol(s.travis,'travis',s.travisTeam)}</div>
+      </div>
+    </div>
+    ${draftDone ? `
+    <div class="nom-pairings">
+      <div class="nom-pairings-title">Round 1 Pairings — ${d.rounds && d.rounds[0] ? d.rounds[0].name : 'Round 1'}</div>
+      <div class="nom-pairing-grid">${pairingCards}</div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="nom-player-pick-btn jake" onclick="nomAddPairing()" style="padding:8px 16px;font-size:0.68rem">+ Add Pairing</button>
+        <button class="nom-player-pick-btn travis" onclick="nomRemovePairing()" style="padding:8px 16px;font-size:0.68rem">− Remove Last</button>
+      </div>
+    </div>
+    <button class="nom-complete-btn" id="nom-complete-btn" onclick="nomComplete()">🏌️ Nominations Complete — Lock Teams & Pairings</button>` : ''}
+  </div>`;
+}
+
+function nomPick(name, side) {
+  const s = _nomState;
+  const idx = s.pool.findIndex(p => p.name === name);
+  if (idx === -1) return;
+  const player = s.pool.splice(idx, 1)[0];
+  s[side].push(player);
+  renderNominations();
+  // Flash the newly added tile
+  setTimeout(() => {
+    const tiles = document.querySelectorAll(`#${side === 'jake' ? 'jake' : 'travis'}-picked-${s[side].length - 1}`);
+    tiles.forEach(t => { t.classList.add('just-picked'); setTimeout(() => t.classList.remove('just-picked'), 1000); });
+  }, 50);
+}
+
+function nomRemove(name, side) {
+  const s = _nomState;
+  const idx = s[side].findIndex(p => p.name === name);
+  if (idx === -1) return;
+  const player = s[side].splice(idx, 1)[0];
+  s.pool.push(player);
+  // Sort pool by original order
+  renderNominations();
+}
+
+function nomPairingChange(i, field, val) {
+  if (!_nomState.pairings[i]) _nomState.pairings[i] = {};
+  _nomState.pairings[i][field] = val;
+}
+
+function nomAddPairing() {
+  _nomState.pairings.push({});
+  renderNominations();
+}
+
+function nomRemovePairing() {
+  if (_nomState.pairings.length > 1) {
+    _nomState.pairings.pop();
+    renderNominations();
+  }
+}
+
+async function nomComplete() {
+  const s = _nomState;
+  const yr = s.yr;
+  const btn = document.getElementById('nom-complete-btn');
+  btn.textContent = '⏳ Saving...';
+  btn.disabled = true;
+
+  if (!DB.years[yr]) DB.years[yr] = {};
+  DB.years[yr].jakePlayers = s.jake;
+  DB.years[yr].travisPlayers = s.travis;
+  if (DB.years[yr].rounds && DB.years[yr].rounds[0]) {
+    DB.years[yr].rounds[0].pairings = s.pairings;
+  }
+
+  const ok = await saveData();
+  if (ok) {
+    localStorage.removeItem(CACHE_KEY);
+    showToast('✓ Nominations locked in!');
+    btn.textContent = '✓ Nominations Complete!';
+    btn.style.background = '#2d7a4a';
+    renderHome();
+  } else {
+    btn.textContent = '🏌️ Nominations Complete — Lock Teams & Pairings';
+    btn.disabled = false;
+    showToast('Save failed — check connection');
+  }
 }
 
 // ── RENDER GALLERY ──
@@ -1940,7 +2250,7 @@ async function saveLive() {
   if (ok) {
     setSaveBtn('save-live-btn', 'done');
     localStorage.removeItem(CACHE_KEY);
-    setTimeout(() => { closeModal('modal-admin'); renderHome(); }, 1200);
+    renderHome();
   } else {
     setSaveBtn('save-live-btn', 'reset');
   }
@@ -1958,17 +2268,20 @@ function loadSettingsPanel() {
   // Show roster inputs only for live year
   const rosterSection = document.getElementById('admin-roster-section');
   if (yr === DB.liveYear) {
-    const jakeNames = (d.jakePlayers||[]).map(p=>p.name).join('\n');
-    const travisNames = (d.travisPlayers||[]).map(p=>p.name).join('\n');
+    const jakeNames = (d.jakePlayers||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n');
+    const travisNames = (d.travisPlayers||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n');
     rosterSection.innerHTML = `
+      <div style="font-size:0.68rem;color:var(--text-light);margin:8px 0 4px;padding:6px 8px;background:var(--cream);border:1px solid var(--border);border-radius:2px">
+        Format: <strong>Player Name, handicap</strong> — one per line. E.g. <em>Christian Nilsen, 17</em>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
         <div>
-          <label>Jake's Players (one per line)</label>
-          <textarea id="admin-jake-players" rows="10" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${jakeNames}</textarea>
+          <label>Jake's Players</label>
+          <textarea id="admin-jake-players" rows="12" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${jakeNames}</textarea>
         </div>
         <div>
-          <label>Travis's Players (one per line)</label>
-          <textarea id="admin-travis-players" rows="10" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${travisNames}</textarea>
+          <label>Travis's Players</label>
+          <textarea id="admin-travis-players" rows="12" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${travisNames}</textarea>
         </div>
       </div>`;
   } else {
@@ -1994,14 +2307,19 @@ async function saveSettings() {
   if (travisTeam) DB.years[yr].travisTeam = travisTeam;
   if (tsx) DB.years[yr].tsxFactor = tsx;
 
+  const parseRoster = (text) => text
+    ? text.split('\n').map(line => {
+        const parts = line.split(',');
+        const name = parts[0].trim();
+        const hdcp = parts.length > 1 ? parseFloat(parts[1].trim()) : 0;
+        return name ? { name, hdcp: isNaN(hdcp) ? 0 : hdcp } : null;
+      }).filter(Boolean)
+    : [];
+
   // Parse player rosters for live year (always save, even if empty)
   if (yr === DB.liveYear) {
-    DB.years[yr].jakePlayers = jakePlayers
-      ? jakePlayers.split('\n').map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}))
-      : [];
-    DB.years[yr].travisPlayers = travisPlayers
-      ? travisPlayers.split('\n').map(n => n.trim()).filter(Boolean).map(name => ({name, hdcp: 0}))
-      : [];
+    DB.years[yr].jakePlayers = parseRoster(jakePlayers);
+    DB.years[yr].travisPlayers = parseRoster(travisPlayers);
   }
 
   DB.nextEvent.title = document.getElementById('admin-next-title').value.trim() || DB.nextEvent.title;
@@ -2011,7 +2329,7 @@ async function saveSettings() {
   if (ok) {
     setSaveBtn('save-settings-btn', 'done');
     localStorage.removeItem(CACHE_KEY);
-    setTimeout(() => { closeModal('modal-admin'); renderHome(); }, 1200);
+    renderHome();
   } else {
     setSaveBtn('save-settings-btn', 'reset');
   }
