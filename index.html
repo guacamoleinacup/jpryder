@@ -830,7 +830,9 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
   .site-title { font-size: 1.1rem; }
   .logo-wrap img { height: 36px; width: 36px; }
   .logo-wrap { gap: 8px; }
-  nav button { padding: 16px 8px; font-size: 0.58rem; letter-spacing: 0.1em; }
+  nav { display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  nav::-webkit-scrollbar { display: none; }
+  nav button { padding: 16px 10px; font-size: 0.58rem; letter-spacing: 0.1em; white-space: nowrap; flex-shrink: 0; }
   .live-indicator { gap: 0; }
   #live-label { display: none; }
   .admin-btn { font-size: 0.58rem; padding: 6px 9px; }
