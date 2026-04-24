@@ -578,7 +578,8 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
   .logo-wrap img { height: 36px; width: 36px; }
   .logo-wrap { gap: 8px; }
   nav button { padding: 16px 8px; font-size: 0.58rem; letter-spacing: 0.1em; }
-  .live-indicator { display: none; }
+  .live-indicator { gap: 0; }
+  #live-label { display: none; }
   .admin-btn { font-size: 0.58rem; padding: 6px 9px; }
 
   /* Hero */
@@ -815,7 +816,7 @@ const DEFAULT_DATA = {
   seriesWins: { jake: 2, travis: 1 },
   nextEvent: {
     title: '4th Annual JP Ryder Cup',
-    details: 'Date & Location TBD · 2026'
+    details: 'June 25–27, 2026 · Wisconsin Dells, WI\nReedsburg CC · Trappers Turn · Wild Rock Golf Club\nStaying at Wilderness Resort'
   },
   years: {
     '2025': {
@@ -956,7 +957,8 @@ function renderHome() {
   document.getElementById('jake-wins').textContent = DB.seriesWins.jake;
   document.getElementById('travis-wins').textContent = DB.seriesWins.travis;
   document.getElementById('next-title').textContent = DB.nextEvent.title;
-  document.getElementById('next-details').textContent = DB.nextEvent.details;
+  document.getElementById('next-details').innerHTML =
+    (DB.nextEvent.details || '').replace(/\n/g, '<br>');
 }
 
 // ── RENDER HISTORY ──
