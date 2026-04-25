@@ -1664,26 +1664,34 @@ function renderAllTimeLeaderboard() {
       return b[1].appearances - a[1].appearances;
     });
   if (!sorted.length) return '';
-  const hasPts = sorted.some(([,v]) => v.pts > 0);
-  const cols = hasPts ? '28px 1fr 36px 36px 44px 52px' : '28px 1fr 36px 36px 44px';
+  const cols = '28px 1fr 36px 32px 44px 48px 52px';
   const top10 = sorted.slice(0, 10);
   const rest = sorted.slice(10);
   const makeRow = (name, v, i) => {
     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
     const winPct = v.appearances > 0 ? Math.round((v.wins / v.appearances) * 100) : 0;
     const escaped = name.replace(/'/g, "\\'");
-    const ptsCell = hasPts ? `<span style="font-size:0.66rem;color:${v.pts>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${fmt(v.pts)}pts</span>` : '';
+    // Calculate raw and contribution pts from rounds-based years
+    let rawTotal = 0;
+    ['2026'].forEach(yr => {
+      const d = DB.years[yr];
+      if (!d || !d.rounds) return;
+      const { players } = calcScores(d);
+      if (players[name]) {
+        rawTotal += players[name].roundPts.reduce((s,r) => s + (r.raw||0), 0);
+      }
+    });
     return `<div style="display:grid;grid-template-columns:${cols};gap:4px;align-items:center;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:0.75rem">
       <span style="font-size:${i<3?'0.9rem':'0.7rem'};text-align:center;line-height:1">${medal}</span>
       <button class="player-name-btn" onclick="openPlayerModal('${escaped}')">${name}</button>
-      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${v.appearances}x</span>
-      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${v.wins}W</span>
+      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${v.appearances}</span>
+      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${v.wins}</span>
       <span style="font-weight:700;color:var(--forest-deep);font-size:0.75rem;text-align:right">${winPct}%</span>
-      ${ptsCell}
+      <span style="font-size:0.66rem;color:${rawTotal>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${rawTotal}</span>
+      <span style="font-size:0.66rem;color:${v.pts>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${fmt(v.pts)}</span>
     </div>`;
   };
-  const hdrPts = hasPts ? '<span style="text-align:right">Pts</span>' : '';
-  const hdr = `<span></span><span>Player</span><span style="text-align:right">Apps</span><span style="text-align:right">Wins</span><span style="text-align:right">Win%</span>${hdrPts}`;
+  const hdr = `<span></span><span>Player</span><span style="text-align:right">Apps</span><span style="text-align:right">Wins</span><span style="text-align:right">Win%</span><span style="text-align:right">Raw</span><span style="text-align:right">Pts</span>`;
   const topRows = top10.map(([name, v], i) => makeRow(name, v, i)).join('');
   const restRows = rest.map(([name, v], i) => makeRow(name, v, i + 10)).join('');
   const expandBtn = rest.length > 0 ? `
@@ -1697,7 +1705,7 @@ function renderAllTimeLeaderboard() {
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--cream)">All-Time Leaderboard</div>
         <div style="font-size:0.62rem;color:var(--gold-light);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px">2023 – Present</div>
       </div>
-      <div style="font-size:0.58rem;color:rgba(248,245,238,0.4);text-align:right;line-height:1.6">Sorted by wins<br>Win % shown</div>
+      <div style="font-size:0.58rem;color:rgba(248,245,238,0.4);text-align:right;line-height:1.6">Wins → Win% → Apps<br>Raw = holes won · Pts = contribution</div>
     </div>
     <div style="padding:6px 14px 10px">
       <div style="display:grid;grid-template-columns:${cols};gap:4px;padding:5px 0;border-bottom:2px solid var(--cream-dark);font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light)">${hdr}</div>
