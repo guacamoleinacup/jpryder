@@ -1223,7 +1223,7 @@ function showSection(id, btn) {
   document.getElementById('sec-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'history') renderHistory();
-  if (id === 'nominations') { _nomState = null; renderNominations(); }
+  if (id === 'nominations') { _nomPairings = null; renderNominations(); }
   if (id === 'gallery') renderGallery();
 }
 
@@ -1766,7 +1766,293 @@ function openPlayerModal(name) {
 }
 
 // ── NOMINATIONS ──
-let _nomState = null;
+// _nomRound = which round tab is active (0,1,2)
+// _nomPairings = pairings being built for current round (local, not saved yet)
+// _nomStep = 'nominating' or 'responding'
+// _nomPick = {nominator: [], responder: []} current in-progress pairing
+
+let _nomRound = 0;
+let _nomPairings = null; // null = not started, load from DB on init
+let _nomStep = 'nominating';
+let _nomPick = { nominator: [], responder: [] };
+
+// Who nominates first per round: 0=Jake, 1=Travis, 2=Jake
+function nominatorSide(ri) { return ri === 1 ? 'travis' : 'jake'; }
+function responderSide(ri) { return ri === 1 ? 'jake' : 'travis'; }
+
+function nomInit(ri) {
+  _nomRound = ri;
+  const yr = DB.liveYear || '2026';
+  const d = DB.years[yr];
+  // Load existing saved pairings for this round
+  _nomPairings = d && d.rounds && d.rounds[ri] ? [...(d.rounds[ri].pairings || [])] : [];
+  _nomStep = 'nominating';
+  _nomPick = { nominator: [], responder: [] };
+}
+
+function renderNominations() {
+  const yr = DB.liveYear || '2026';
+  const d = DB.years[yr];
+  if (!d) {
+    document.getElementById('nom-content').innerHTML = `<div class="nom-wrap"><div class="loading">No active year configured.</div></div>`;
+    return;
+  }
+
+  if (_nomPairings === null) nomInit(0);
+
+  const ri = _nomRound;
+  const round = d.rounds && d.rounds[ri];
+  const isTeamRound = round && round.multiplier === 0.5;
+  const playersPerPick = isTeamRound ? 2 : 1;
+  const nomSide = nominatorSide(ri);
+  const resSide = responderSide(ri);
+  const nomTeam = nomSide === 'jake' ? (d.jakeTeam || "Jake's Team") : (d.travisTeam || "Travis's Team");
+  const resTeam = resSide === 'jake' ? (d.jakeTeam || "Jake's Team") : (d.travisTeam || "Travis's Team");
+  const jakePlayers = d.jakePlayers || [];
+  const travisPlayers = d.travisPlayers || [];
+
+  // Figure out who's already paired in confirmed pairings
+  const pairedJake = new Set();
+  const pairedTravis = new Set();
+  (_nomPairings || []).forEach(p => {
+    if (p.jake1) pairedJake.add(p.jake1);
+    if (p.jake2) pairedJake.add(p.jake2);
+    if (p.travis1) pairedTravis.add(p.travis1);
+    if (p.travis2) pairedTravis.add(p.travis2);
+  });
+
+  const jakeAvail = jakePlayers.filter(p => !pairedJake.has(p.name));
+  const travisAvail = travisPlayers.filter(p => !pairedTravis.has(p.name));
+  const nomAvail = nomSide === 'jake' ? jakeAvail : travisAvail;
+  const resAvail = resSide === 'jake' ? jakeAvail : travisAvail;
+  const nomPicked = _nomPick.nominator;
+  const resPicked = _nomPick.responder;
+
+  const totalExpected = Math.ceil(Math.min(jakePlayers.length, travisPlayers.length) / playersPerPick);
+  const allPaired = jakePlayers.length > 0 && (_nomPairings||[]).length >= totalExpected && jakeAvail.length === 0;
+
+  // ── ROUND TABS ──
+  const roundTabs = (d.rounds || []).map((r, i) => `
+    <button onclick="nomSwitchRound(${i})"
+      style="padding:8px 14px;border:1px solid ${ri===i?'var(--forest-deep)':'var(--border)'};
+      background:${ri===i?'var(--forest-deep)':'none'};
+      color:${ri===i?'var(--cream)':'var(--text-light)'};
+      border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.65rem;
+      font-weight:600;cursor:pointer;white-space:nowrap">
+      Round ${i+1} · ${r.name}
+    </button>`).join('');
+
+  // ── STATUS BANNER ──
+  let bannerHTML = '';
+  if (allPaired) {
+    bannerHTML = `<div class="nom-pick-banner" style="border-color:var(--gold)">
+      <div class="nom-pick-label">Round ${ri+1} Complete</div>
+      <div class="nom-pick-name" style="font-size:1.2rem">All pairings set ✓</div>
+    </div>`;
+  } else if (_nomStep === 'nominating') {
+    const picked = nomPicked.map(p=>p.name).join(' & ');
+    bannerHTML = `<div class="nom-pick-banner">
+      <div class="nom-pick-label">Pairing ${(_nomPairings||[]).length + 1} · Nominating</div>
+      <div class="nom-pick-name" style="color:${nomSide==='jake'?'rgba(150,220,180,1)':'rgba(240,150,150,1)'}">${nomTeam}</div>
+      <div class="nom-pick-num">Select ${playersPerPick === 2 ? '2 players' : '1 player'} from your team${picked ? ` · ${picked} selected` : ''}</div>
+    </div>`;
+  } else {
+    const nominated = nomPicked.map(p=>p.name).join(' & ');
+    const picked = resPicked.map(p=>p.name).join(' & ');
+    bannerHTML = `<div class="nom-pick-banner" style="border-color:${resSide==='jake'?'rgba(100,200,140,0.5)':'rgba(220,100,100,0.5)'}">
+      <div class="nom-pick-label">Pairing ${(_nomPairings||[]).length + 1} · Responding to ${nominated}</div>
+      <div class="nom-pick-name" style="color:${resSide==='jake'?'rgba(150,220,180,1)':'rgba(240,150,150,1)'}">${resTeam}</div>
+      <div class="nom-pick-num">Select ${playersPerPick === 2 ? '2 players' : '1 player'} from your team${picked ? ` · ${picked} selected` : ''}</div>
+    </div>`;
+  }
+
+  // ── PLAYER TILES ──
+  const makeTiles = (players, side, avail, pickedArr, isActiveSide) => {
+    return players.map(p => {
+      const isPaired = side === 'jake' ? pairedJake.has(p.name) : pairedTravis.has(p.name);
+      const isSelected = pickedArr.some(x => x.name === p.name);
+      const canPick = isActiveSide && !isPaired && !isSelected && pickedArr.length < playersPerPick;
+
+      if (isSelected) return `<div class="nom-player-tile" style="background:rgba(201,168,76,0.15);border-left:3px solid var(--gold)">
+        <span style="font-weight:700">${p.name}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
+          <button class="nom-player-remove" onclick="nomDeselect('${p.name.replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>`;
+
+      return `<div class="nom-player-tile" onclick="${canPick ? `nomSelectPlayer('${p.name.replace(/'/g,"\\'")}','${side}')` : ''}"
+        style="opacity:${isPaired?0.3:canPick?1:0.5};cursor:${canPick?'pointer':'default'}">
+        <span>${p.name}</span>
+        <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
+      </div>`;
+    }).join('');
+  };
+
+  const nomIsJake = nomSide === 'jake';
+  const jakeTiles = makeTiles(jakePlayers, 'jake', jakeAvail,
+    nomIsJake ? (_nomStep==='nominating' ? nomPicked : []) : (_nomStep==='responding' ? resPicked : []),
+    nomIsJake ? (_nomStep==='nominating') : (_nomStep==='responding')
+  );
+  const travisTiles = makeTiles(travisPlayers, 'travis', travisAvail,
+    !nomIsJake ? (_nomStep==='nominating' ? nomPicked : []) : (_nomStep==='responding' ? resPicked : []),
+    !nomIsJake ? (_nomStep==='nominating') : (_nomStep==='responding')
+  );
+
+  // ── CONFIRM BUTTON ──
+  const canConfirm = _nomStep === 'responding' && resPicked.length === playersPerPick;
+  const confirmBtn = canConfirm ? `<div style="text-align:center;margin-top:16px">
+    <button onclick="nomConfirmPairing()" style="padding:12px 32px;background:var(--forest-deep);color:var(--cream);border:2px solid var(--gold);border-radius:3px;font-family:'Montserrat',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;cursor:pointer">
+      ✓ Confirm Pairing ${(_nomPairings||[]).length + 1}
+    </button>
+  </div>` : '';
+
+  // ── CONFIRMED PAIRINGS LIST ──
+  const pairingsHTML = (_nomPairings||[]).length ? `
+    <div style="margin-top:24px">
+      <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px">Confirmed Pairings</div>
+      ${(_nomPairings||[]).map((p, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:3px;margin-bottom:6px;font-size:0.78rem">
+          <span style="color:var(--jake);font-weight:600">${[p.jake1,p.jake2].filter(Boolean).join(' & ')}</span>
+          <span style="color:var(--text-light);font-size:0.65rem">vs</span>
+          <span style="color:var(--travis);font-weight:600">${[p.travis1,p.travis2].filter(Boolean).join(' & ')}</span>
+          <button onclick="nomUndoPairing(${i})" style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:0.7rem;padding:2px 6px">✕</button>
+        </div>`).join('')}
+    </div>` : '';
+
+  const saveBtn = (_nomPairings||[]).length > 0 ? `
+    <button id="nom-save-btn" class="nom-complete-btn" onclick="nomSavePairings()">
+      🏌️ Save Round ${ri + 1} Pairings
+    </button>` : '';
+
+  document.getElementById('nom-content').innerHTML = `
+  <div class="nom-wrap">
+    <div class="nom-header">
+      <h2>Nominations</h2>
+      <p>${yr} JP Ryder Cup · ${round ? round.format : ''}</p>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap">${roundTabs}</div>
+    ${bannerHTML}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+      <div>
+        <div class="nom-col-title jake-col">${d.jakeTeam || "Jake's Team"}</div>
+        <div class="nom-col-body">${jakeTiles || '<div class="nom-empty">No players set</div>'}</div>
+      </div>
+      <div>
+        <div class="nom-col-title travis-col">${d.travisTeam || "Travis's Team"}</div>
+        <div class="nom-col-body">${travisTiles || '<div class="nom-empty">No players set</div>'}</div>
+      </div>
+    </div>
+    ${confirmBtn}
+    ${pairingsHTML}
+    ${saveBtn}
+  </div>`;
+}
+
+function nomSwitchRound(ri) {
+  nomInit(ri);
+  renderNominations();
+}
+
+function nomSelectPlayer(name, side) {
+  const yr = DB.liveYear || '2026';
+  const d = DB.years[yr];
+  const ri = _nomRound;
+  const nomSide = nominatorSide(ri);
+  const resSide = responderSide(ri);
+  const players = side === 'jake' ? (d.jakePlayers||[]) : (d.travisPlayers||[]);
+  const player = players.find(p => p.name === name);
+  if (!player) return;
+
+  const round = d.rounds && d.rounds[ri];
+  const isTeamRound = round && round.multiplier === 0.5;
+  const playersPerPick = isTeamRound ? 2 : 1;
+
+  if (_nomStep === 'nominating' && side === nomSide) {
+    if (_nomPick.nominator.length < playersPerPick) {
+      _nomPick.nominator.push(player);
+      if (_nomPick.nominator.length === playersPerPick) _nomStep = 'responding';
+    }
+  } else if (_nomStep === 'responding' && side === resSide) {
+    if (_nomPick.responder.length < playersPerPick) {
+      _nomPick.responder.push(player);
+    }
+  }
+  renderNominations();
+}
+
+function nomDeselect(name) {
+  // Remove from whichever pick array it's in
+  _nomPick.nominator = _nomPick.nominator.filter(p => p.name !== name);
+  _nomPick.responder = _nomPick.responder.filter(p => p.name !== name);
+  // If nominator pick was cleared, go back to nominating step
+  if (_nomPick.nominator.length < (nominatorSide(_nomRound) ? 1 : 1)) {
+    const yr = DB.liveYear || '2026';
+    const d = DB.years[yr];
+    const round = d && d.rounds && d.rounds[_nomRound];
+    const isTeam = round && round.multiplier === 0.5;
+    const needed = isTeam ? 2 : 1;
+    if (_nomPick.nominator.length < needed) _nomStep = 'nominating';
+  }
+  renderNominations();
+}
+
+function nomConfirmPairing() {
+  const ri = _nomRound;
+  const nomSide = nominatorSide(ri);
+  const pairing = {};
+  const nomPicked = _nomPick.nominator;
+  const resPicked = _nomPick.responder;
+
+  if (nomSide === 'jake') {
+    if (nomPicked[0]) pairing.jake1 = nomPicked[0].name;
+    if (nomPicked[1]) pairing.jake2 = nomPicked[1].name;
+    if (resPicked[0]) pairing.travis1 = resPicked[0].name;
+    if (resPicked[1]) pairing.travis2 = resPicked[1].name;
+  } else {
+    if (nomPicked[0]) pairing.travis1 = nomPicked[0].name;
+    if (nomPicked[1]) pairing.travis2 = nomPicked[1].name;
+    if (resPicked[0]) pairing.jake1 = resPicked[0].name;
+    if (resPicked[1]) pairing.jake2 = resPicked[1].name;
+  }
+
+  _nomPairings.push(pairing);
+  _nomPick = { nominator: [], responder: [] };
+  _nomStep = 'nominating';
+  renderNominations();
+}
+
+function nomUndoPairing(i) {
+  _nomPairings.splice(i, 1);
+  _nomPick = { nominator: [], responder: [] };
+  _nomStep = 'nominating';
+  renderNominations();
+}
+
+async function nomSavePairings() {
+  const yr = DB.liveYear || '2026';
+  const ri = _nomRound;
+  const btn = document.getElementById('nom-save-btn');
+  btn.textContent = '⏳ Saving...';
+  btn.disabled = true;
+
+  if (DB.years[yr].rounds && DB.years[yr].rounds[ri]) {
+    DB.years[yr].rounds[ri].pairings = _nomPairings;
+  }
+
+  const ok = await saveData();
+  if (ok) {
+    localStorage.removeItem(CACHE_KEY);
+    showToast('✓ Round ' + (ri + 1) + ' pairings saved!');
+    btn.textContent = '✓ Saved!';
+    btn.style.background = '#2d7a4a';
+    setTimeout(() => { btn.style.background = ''; btn.textContent = '🏌️ Save Round ' + (ri+1) + ' Pairings'; btn.disabled = false; }, 2000);
+  } else {
+    btn.textContent = '🏌️ Save Round ' + (ri + 1) + ' Pairings';
+    btn.disabled = false;
+    showToast('Save failed — check connection');
+  }
+}
 
 function initNomState(roundIdx) {
   const yr = DB.liveYear || '2026';
