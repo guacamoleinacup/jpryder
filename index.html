@@ -1676,6 +1676,8 @@ function renderAllTimeLeaderboard() {
   trueRanked.forEach((p, i) => { trueRank[p.name] = i; });
 
   // Then sort for display
+  const col = _atlSort.col;
+  const dir = _atlSort.dir;
   all.sort((a, b) => {
     if (col === 'rank') return dir === 1 ? defaultSort(a, b) : defaultSort(b, a);
     if (col === 'player') return dir * a.name.localeCompare(b.name);
