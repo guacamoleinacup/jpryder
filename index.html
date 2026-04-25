@@ -1507,6 +1507,23 @@ function buildYearCard(yr) {
         </div>`;
       }
 
+      // Show pairings if set but no scores yet
+      const pairings = r.pairings || [];
+      let pairingsTable = '';
+      if (!hasScore && pairings.length > 0) {
+        pairingsTable = `<div style="margin-top:10px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--cream-dark)">
+            <div style="padding:5px 10px;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--jake);border-right:1px solid var(--border)">${d.jakeTeam}</div>
+            <div style="padding:5px 10px;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--travis)">${d.travisTeam}</div>
+          </div>
+          ${pairings.map(p => `
+            <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--cream-dark)">
+              <div style="padding:6px 10px;font-size:0.75rem;color:var(--text-mid);border-right:1px solid var(--border)">${[p.jake1,p.jake2].filter(Boolean).join(' & ')}</div>
+              <div style="padding:6px 10px;font-size:0.75rem;color:var(--text-mid)">${[p.travis1,p.travis2].filter(Boolean).join(' & ')}</div>
+            </div>`).join('')}
+        </div>`;
+      }
+
       return `<div style="padding:14px 0;border-bottom:1px solid var(--cream-dark)">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
           <div style="display:flex;align-items:baseline;gap:8px">
@@ -1518,6 +1535,7 @@ function buildYearCard(yr) {
             : '<span style="font-size:0.62rem;color:var(--text-light);background:var(--cream-dark);padding:2px 8px;border-radius:10px">Upcoming</span>'}
         </div>
         ${playerTable}
+        ${pairingsTable}
       </div>`;
     }).join('');
 
@@ -1831,6 +1849,10 @@ function renderNominations() {
   const totalExpected = Math.ceil(Math.min(jakePlayers.length, travisPlayers.length) / playersPerPick);
   const allPaired = jakePlayers.length > 0 && (_nomPairings||[]).length >= totalExpected && jakeAvail.length === 0;
 
+  // Round timing labels
+  const roundTiming = ['Thursday Night', 'Friday Lunch', 'Friday Night'];
+  const roundFirstPick = ['Jake nominates first', 'Travis nominates first', 'Jake nominates first'];
+
   // ── ROUND TABS ──
   const roundTabs = (d.rounds || []).map((r, i) => `
     <button onclick="nomSwitchRound(${i})"
@@ -1838,8 +1860,9 @@ function renderNominations() {
       background:${ri===i?'var(--forest-deep)':'none'};
       color:${ri===i?'var(--cream)':'var(--text-light)'};
       border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.65rem;
-      font-weight:600;cursor:pointer;white-space:nowrap">
-      Round ${i+1} · ${r.name}
+      font-weight:600;cursor:pointer;white-space:nowrap;line-height:1.5">
+      Round ${i+1} · ${r.name}<br>
+      <span style="font-size:0.55rem;opacity:0.7;font-weight:400">${roundTiming[i]} · ${roundFirstPick[i]}</span>
     </button>`).join('');
 
   // ── STATUS BANNER ──
@@ -1922,8 +1945,11 @@ function renderNominations() {
 
   const saveBtn = (_nomPairings||[]).length > 0 ? `
     <button id="nom-save-btn" class="nom-complete-btn" onclick="nomSavePairings()">
-      🏌️ Save Round ${ri + 1} Pairings
-    </button>` : '';
+      🏌️ Lock In Round ${ri + 1} Pairings
+    </button>
+    <div style="text-align:center;font-size:0.65rem;color:var(--text-light);margin-top:8px;letter-spacing:0.05em">
+      Pairings will be visible in the History tab. Enter scores via Admin after the round.
+    </div>` : '';
 
   document.getElementById('nom-content').innerHTML = `
   <div class="nom-wrap">
@@ -1982,18 +2008,11 @@ function nomSelectPlayer(name, side) {
 }
 
 function nomDeselect(name) {
-  // Remove from whichever pick array it's in
+  const wasNominator = _nomPick.nominator.some(p => p.name === name);
   _nomPick.nominator = _nomPick.nominator.filter(p => p.name !== name);
   _nomPick.responder = _nomPick.responder.filter(p => p.name !== name);
-  // If nominator pick was cleared, go back to nominating step
-  if (_nomPick.nominator.length < (nominatorSide(_nomRound) ? 1 : 1)) {
-    const yr = DB.liveYear || '2026';
-    const d = DB.years[yr];
-    const round = d && d.rounds && d.rounds[_nomRound];
-    const isTeam = round && round.multiplier === 0.5;
-    const needed = isTeam ? 2 : 1;
-    if (_nomPick.nominator.length < needed) _nomStep = 'nominating';
-  }
+  // If we removed from nominator picks, go back to nominating step
+  if (wasNominator) _nomStep = 'nominating';
   renderNominations();
 }
 
@@ -2054,295 +2073,6 @@ async function nomSavePairings() {
   }
 }
 
-function initNomState(roundIdx) {
-  const yr = DB.liveYear || '2026';
-  const d = DB.years[yr];
-  if (!d) return null;
-
-  const ri = roundIdx !== undefined ? roundIdx : 0;
-  const round = d.rounds && d.rounds[ri];
-  const isTeamRound = round && round.multiplier === 0.5;
-  // Round 0=Jake nominates, 1=Travis nominates, 2=Jake nominates
-  const jakeNominatesFirst = ri !== 1;
-  const playersPerSide = isTeamRound ? 2 : 1;
-
-  // Get existing pairings for this round
-  const existingPairings = round ? (round.pairings || []) : [];
-
-  // Figure out which players are already paired
-  const jakedPaired = new Set();
-  const travisPaired = new Set();
-  existingPairings.forEach(p => {
-    if (p.jake1) jakedPaired.add(p.jake1);
-    if (p.jake2) jakedPaired.add(p.jake2);
-    if (p.travis1) travisPaired.add(p.travis1);
-    if (p.travis2) travisPaired.add(p.travis2);
-  });
-
-  return {
-    yr, ri,
-    jakeTeam: d.jakeTeam || "Jake's Team",
-    travisTeam: d.travisTeam || "Travis's Team",
-    jakePlayers: (d.jakePlayers || []),
-    travisPlayers: (d.travisPlayers || []),
-    jakeAvail: (d.jakePlayers || []).filter(p => !jakedPaired.has(p.name)),
-    travisAvail: (d.travisPlayers || []).filter(p => !travisPaired.has(p.name)),
-    pairings: [...existingPairings],
-    playersPerSide,
-    isTeamRound,
-    jakeNominatesFirst,
-    pickingJake: jakeNominatesFirst,
-    currentJakePick: [],
-    currentTravisPick: [],
-    roundName: round ? round.name : 'Round ' + (ri + 1),
-    roundFormat: round ? round.format : ''
-  };
-}
-
-function renderNominations() {
-  const yr = DB.liveYear || '2026';
-  const d = DB.years[yr];
-  if (!d) {
-    document.getElementById('nom-content').innerHTML = `<div class="nom-wrap"><div class="loading">No active year configured.</div></div>`;
-    return;
-  }
-
-  if (!_nomState) _nomState = initNomState(0);
-  const s = _nomState;
-
-  const totalExpected = Math.min(s.jakePlayers.length, s.travisPlayers.length);
-  const allPaired = totalExpected > 0 && s.pairings.length >= Math.ceil(totalExpected / s.playersPerSide) && s.jakeAvail.length === 0;
-
-  // Round selector tabs
-  const roundTabs = (d.rounds || []).map((r, i) => `
-    <button onclick="nomSwitchRound(${i})" 
-      style="padding:8px 16px;border:1px solid ${s.ri===i?'var(--forest-deep)':'var(--border)'};
-      background:${s.ri===i?'var(--forest-deep)':'none'};
-      color:${s.ri===i?'var(--cream)':'var(--text-light)'};
-      border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.65rem;
-      font-weight:600;cursor:pointer;letter-spacing:0.08em">
-      Round ${i+1}<br><span style="font-size:0.58rem;opacity:0.7">${r.name}</span>
-    </button>`).join('');
-
-  // Status banner
-  const nominatorTeam = s.jakeNominatesFirst ? s.jakeTeam : s.travisTeam;
-  const responderTeam = s.jakeNominatesFirst ? s.travisTeam : s.jakeTeam;
-  const nominatorPicks = s.jakeNominatesFirst ? s.currentJakePick : s.currentTravisPick;
-  const responderPicks = s.jakeNominatesFirst ? s.currentTravisPick : s.currentJakePick;
-  const nominatorColor = s.jakeNominatesFirst ? 'rgba(150,220,180,1)' : 'rgba(240,150,150,1)';
-  const responderColor = s.jakeNominatesFirst ? 'rgba(240,150,150,1)' : 'rgba(150,220,180,1)';
-
-  let bannerHTML = '';
-  if (allPaired) {
-    bannerHTML = `<div class="nom-pick-banner" style="border-color:var(--gold)">
-      <div class="nom-pick-label">All Pairings Set</div>
-      <div class="nom-pick-name" style="font-size:1.2rem">Round ${s.ri+1} Complete ✓</div>
-    </div>`;
-  } else if (s.pickingJake) {
-    const selected = nominatorPicks.map(p=>p.name).join(' & ');
-    bannerHTML = `<div class="nom-pick-banner">
-      <div class="nom-pick-label">Nominating — Pairing ${s.pairings.length + 1}</div>
-      <div class="nom-pick-name" style="color:${nominatorColor}">${nominatorTeam}</div>
-      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} from your team${selected ? ` · ${selected} selected` : ''}</div>
-    </div>`;
-  } else {
-    const nominated = nominatorPicks.map(p=>p.name).join(' & ');
-    const responding = responderPicks.map(p=>p.name).join(' & ');
-    bannerHTML = `<div class="nom-pick-banner" style="border-color:${responderColor}40">
-      <div class="nom-pick-label">Responding to ${nominated} — Pairing ${s.pairings.length + 1}</div>
-      <div class="nom-pick-name" style="color:${responderColor}">${responderTeam}</div>
-      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} from your team${responding ? ` · ${responding} selected` : ''}</div>
-    </div>`;
-  }
-
-  // Available player tiles
-  const playerTile = (p, side, isSelected, isAvail) => {
-    if (!isAvail) return `<div class="nom-player-tile" style="opacity:0.35;cursor:default">
-      <span>${p.name}</span>
-      <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
-    </div>`;
-    if (isSelected) return `<div class="nom-player-tile just-picked" style="background:rgba(201,168,76,0.15);border-left:3px solid var(--gold)">
-      <span style="font-weight:700">${p.name}</span>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
-        <button class="nom-player-remove" onclick="nomDeselect('${p.name.replace(/'/g,"\\'")}','${side}')">✕</button>
-      </div>
-    </div>`;
-    const nominatingSide = s.jakeNominatesFirst ? 'jake' : 'travis';
-    const respondingSide = s.jakeNominatesFirst ? 'travis' : 'jake';
-    const canPick = (side === nominatingSide && s.pickingJake && (side === 'jake' ? s.currentJakePick.length : s.currentTravisPick.length) < s.playersPerSide) ||
-                    (side === respondingSide && !s.pickingJake && (side === 'jake' ? s.currentJakePick.length : s.currentTravisPick.length) < s.playersPerSide);
-    return `<div class="nom-player-tile" onclick="${canPick ? `nomSelect('${p.name.replace(/'/g,"\\'")}','${side}')` : ''}" 
-      style="cursor:${canPick?'pointer':'default'};opacity:${canPick?1:0.5}">
-      <span>${p.name}</span>
-      <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
-    </div>`;
-  };
-
-  const jakeTiles = s.jakePlayers.map(p => {
-    const isAvail = s.jakeAvail.some(a => a.name === p.name);
-    const isSelected = s.currentJakePick.some(a => a.name === p.name);
-    return playerTile(p, 'jake', isSelected, isAvail);
-  }).join('');
-
-  const travisTiles = s.travisPlayers.map(p => {
-    const isAvail = s.travisAvail.some(a => a.name === p.name);
-    const isSelected = s.currentTravisPick.some(a => a.name === p.name);
-    return playerTile(p, 'travis', isSelected, isAvail);
-  }).join('');
-
-  // Confirm pairing button
-  const canConfirm = !s.pickingJake && s.currentJakePick.length === s.playersPerSide && s.currentTravisPick.length === s.playersPerSide;
-  const confirmBtn = !s.pickingJake && canConfirm ? `
-    <div style="text-align:center;margin-top:16px">
-      <button onclick="nomConfirmPairing()" style="padding:12px 32px;background:var(--forest-deep);color:var(--cream);border:2px solid var(--gold);border-radius:3px;font-family:'Montserrat',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;cursor:pointer">
-        ✓ Confirm Pairing ${s.pairings.length + 1}
-      </button>
-    </div>` : '';
-
-  // Existing pairings list
-  const pairingsHTML = s.pairings.length ? `
-    <div style="margin-top:24px">
-      <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px">Confirmed Pairings</div>
-      ${s.pairings.map((p, i) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:3px;margin-bottom:6px;font-size:0.78rem">
-          <span style="color:var(--jake);font-weight:600">${[p.jake1,p.jake2].filter(Boolean).join(' & ')}</span>
-          <span style="color:var(--text-light);font-size:0.65rem">vs</span>
-          <span style="color:var(--travis);font-weight:600">${[p.travis1,p.travis2].filter(Boolean).join(' & ')}</span>
-          <button onclick="nomRemovePairing(${i})" style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:0.7rem;padding:2px 6px">✕</button>
-        </div>`).join('')}
-    </div>` : '';
-
-  const saveBtn = s.pairings.length > 0 ? `
-    <button id="nom-complete-btn" class="nom-complete-btn" onclick="nomSavePairings()">
-      🏌️ Save Round ${s.ri + 1} Pairings
-    </button>` : '';
-
-  document.getElementById('nom-content').innerHTML = `
-  <div class="nom-wrap">
-    <div class="nom-header">
-      <h2>Nominations</h2>
-      <p>${yr} JP Ryder Cup · ${s.roundName} · ${s.roundFormat}</p>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap">${roundTabs}</div>
-    ${bannerHTML}
-    <div class="nom-main">
-      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div>
-          <div class="nom-col-title jake-col">${s.jakeTeam}</div>
-          <div class="nom-col-body">${jakeTiles || '<div class="nom-empty">No players set</div>'}</div>
-        </div>
-        <div>
-          <div class="nom-col-title travis-col">${s.travisTeam}</div>
-          <div class="nom-col-body">${travisTiles || '<div class="nom-empty">No players set</div>'}</div>
-        </div>
-      </div>
-    </div>
-    ${confirmBtn}
-    ${pairingsHTML}
-    ${saveBtn}
-  </div>`;
-}
-
-function nomSwitchRound(ri) {
-  _nomState = initNomState(ri);
-  renderNominations();
-}
-
-function nomSelect(name, side) {
-  const s = _nomState;
-  const avail = side === 'jake' ? s.jakeAvail : s.travisAvail;
-  const pick = side === 'jake' ? s.currentJakePick : s.currentTravisPick;
-  const player = avail.find(p => p.name === name);
-  if (!player) return;
-
-  // Determine if this side is currently nominating or responding
-  const nominatingSide = s.jakeNominatesFirst ? 'jake' : 'travis';
-  const respondingSide = s.jakeNominatesFirst ? 'travis' : 'jake';
-  const isNominating = s.pickingJake;
-
-  if (isNominating && side !== nominatingSide) return;
-  if (!isNominating && side !== respondingSide) return;
-
-  if (pick.length < s.playersPerSide) {
-    pick.push(player);
-    // Switch to responder once nominator fills their picks
-    if (isNominating && pick.length === s.playersPerSide) {
-      s.pickingJake = false;
-    }
-  }
-  renderNominations();
-}
-
-function nomDeselect(name, side) {
-  const s = _nomState;
-  if (side === 'jake') {
-    s.currentJakePick = s.currentJakePick.filter(p => p.name !== name);
-  } else {
-    s.currentTravisPick = s.currentTravisPick.filter(p => p.name !== name);
-  }
-  // If we deselected from the nominating side, go back to nominating
-  const nominatingSide = s.jakeNominatesFirst ? 'jake' : 'travis';
-  if (side === nominatingSide) s.pickingJake = true;
-  renderNominations();
-}
-
-function nomConfirmPairing() {
-  const s = _nomState;
-  const pairing = {};
-  if (s.currentJakePick[0]) pairing.jake1 = s.currentJakePick[0].name;
-  if (s.currentJakePick[1]) pairing.jake2 = s.currentJakePick[1].name;
-  if (s.currentTravisPick[0]) pairing.travis1 = s.currentTravisPick[0].name;
-  if (s.currentTravisPick[1]) pairing.travis2 = s.currentTravisPick[1].name;
-  s.pairings.push(pairing);
-
-  s.currentJakePick.forEach(p => { s.jakeAvail = s.jakeAvail.filter(a => a.name !== p.name); });
-  s.currentTravisPick.forEach(p => { s.travisAvail = s.travisAvail.filter(a => a.name !== p.name); });
-
-  // Reset for next pairing — nominator goes first again
-  s.currentJakePick = [];
-  s.currentTravisPick = [];
-  s.pickingJake = true; // pickingJake=true means "nominator's turn", not literally Jake
-  renderNominations();
-}
-
-function nomRemovePairing(i) {
-  const s = _nomState;
-  const p = s.pairings[i];
-  // Return players to available
-  const d = DB.years[s.yr];
-  if (p.jake1) { const pl = (d.jakePlayers||[]).find(x=>x.name===p.jake1); if(pl) s.jakeAvail.push(pl); }
-  if (p.jake2) { const pl = (d.jakePlayers||[]).find(x=>x.name===p.jake2); if(pl) s.jakeAvail.push(pl); }
-  if (p.travis1) { const pl = (d.travisPlayers||[]).find(x=>x.name===p.travis1); if(pl) s.travisAvail.push(pl); }
-  if (p.travis2) { const pl = (d.travisPlayers||[]).find(x=>x.name===p.travis2); if(pl) s.travisAvail.push(pl); }
-  s.pairings.splice(i, 1);
-  renderNominations();
-}
-
-async function nomSavePairings() {
-  const s = _nomState;
-  const btn = document.getElementById('nom-complete-btn');
-  btn.textContent = '⏳ Saving...';
-  btn.disabled = true;
-
-  if (DB.years[s.yr].rounds && DB.years[s.yr].rounds[s.ri]) {
-    DB.years[s.yr].rounds[s.ri].pairings = s.pairings;
-  }
-
-  const ok = await saveData();
-  if (ok) {
-    localStorage.removeItem(CACHE_KEY);
-    _nomState = null;
-    showToast('✓ Round ' + (s.ri + 1) + ' pairings saved!');
-    btn.textContent = '✓ Saved!';
-    btn.style.background = '#2d7a4a';
-    setTimeout(() => renderNominations(), 1500);
-  } else {
-    btn.textContent = '🏌️ Save Round ' + (s.ri + 1) + ' Pairings';
-    btn.disabled = false;
-    showToast('Save failed — check connection');
-  }
-}
 
 // ── RENDER GALLERY ──
 // Images follow naming convention: 2023-01.jpg, 2023-02.jpg, etc.
