@@ -1584,7 +1584,41 @@ function buildYearCard(yr) {
       ? `<div class="winner-badge" style="background:rgba(201,168,76,0.2);color:var(--gold)">🏌️ In Progress</div>`
       : `<div class="winner-badge">🏆 ${d.jakeWon ? d.jakeTeam : d.travisTeam}</div>`;
 
-    // Individual leaderboard — two columns side by side
+    // Roster section — show teams with clickable names if players are set
+    const hasRoster = (d.jakePlayers||[]).length > 0 || (d.travisPlayers||[]).length > 0;
+    const rosterHTML = hasRoster ? `
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--cream-dark)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div class="team-block-header jake-team" style="margin-bottom:8px">
+              <div class="team-block-name">${d.jakeTeam}</div>
+              <span class="team-captain-tag captain-jake">Jake</span>
+            </div>
+            <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--cream-dark);margin-bottom:2px">
+              <span>Player</span><span>HDCP</span>
+            </div>
+            ${(d.jakePlayers||[]).map(p => `
+              <div class="player-item">
+                <button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')">${p.name}</button>
+                <span class="player-hdcp">${formatHdcp(p.hdcp)}</span>
+              </div>`).join('')}
+          </div>
+          <div>
+            <div class="team-block-header travis-team" style="margin-bottom:8px">
+              <div class="team-block-name">${d.travisTeam}</div>
+              <span class="team-captain-tag captain-travis">Travis</span>
+            </div>
+            <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--cream-dark);margin-bottom:2px">
+              <span>Player</span><span>HDCP</span>
+            </div>
+            ${(d.travisPlayers||[]).map(p => `
+              <div class="player-item">
+                <button class="player-name-btn" onclick="openPlayerModal('${p.name.replace(/'/g,"\\'")}')">${p.name}</button>
+                <span class="player-hdcp">${formatHdcp(p.hdcp)}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>` : '';
     const jakeSorted = Object.entries(players).filter(([,v]) => v.side==='jake' && v.roundPts.some(r=>r.raw!==null)).sort((a,b)=>b[1].totalPts-a[1].totalPts);
     const travisSorted = Object.entries(players).filter(([,v]) => v.side==='travis' && v.roundPts.some(r=>r.raw!==null)).sort((a,b)=>b[1].totalPts-a[1].totalPts);
 
@@ -1641,6 +1675,7 @@ function buildYearCard(yr) {
           </div>
         </div>
         <div style="margin-top:16px">${roundRows}</div>
+        ${rosterHTML}
         ${indivHTML}
       </div>
     </div>`;
