@@ -1054,7 +1054,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <div id="admin-matchups-wrap"></div>
       <div class="modal-btns" style="margin-top:16px">
         <button id="save-live-btn" class="btn-primary" onclick="saveLive()">Save & Publish</button>
-        <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
+        <button class="btn-secondary" onclick="closeModal('modal-admin')">Close</button>
       </div>
     </div>
 
@@ -1092,7 +1092,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 
       <div class="modal-btns" style="margin-top:20px">
         <button id="save-settings-btn" class="btn-primary" onclick="saveSettings()">Save & Publish</button>
-        <button class="btn-secondary" onclick="closeModal('modal-admin')">Cancel</button>
+        <button class="btn-secondary" onclick="closeModal('modal-admin')">Close</button>
       </div>
     </div>
   </div>
@@ -2386,18 +2386,20 @@ function loadSettingsPanel() {
   // Show roster inputs only for live year
   const rosterSection = document.getElementById('admin-roster-section');
   if (yr === DB.liveYear) {
-    // Combine all players into one pool for display
-    const allPlayers = [
-      ...(d.jakePlayers||[]).map(p => `${p.name}, ${p.hdcp}`),
-      ...(d.travisPlayers||[]).map(p => `${p.name}, ${p.hdcp}`)
-    ].join('\n');
+    // Show playerPool first, fall back to combining jakePlayers/travisPlayers
+    const poolPlayers = (d.playerPool||[]).length > 0
+      ? (d.playerPool||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n')
+      : [
+          ...(d.jakePlayers||[]).map(p => `${p.name}, ${p.hdcp}`),
+          ...(d.travisPlayers||[]).map(p => `${p.name}, ${p.hdcp}`)
+        ].join('\n');
     rosterSection.innerHTML = `
       <div style="font-size:0.68rem;color:var(--text-light);margin:8px 0 4px;padding:6px 8px;background:var(--cream);border:1px solid var(--border);border-radius:2px">
         Format: <strong>Player Name, handicap</strong> — one per line. E.g. <em>Christian Nilsen, 17</em><br>
         All players go into the pool. Teams are assigned on Nominations night.
       </div>
       <label>Player Pool (all participants)</label>
-      <textarea id="admin-player-pool" rows="14" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${allPlayers}</textarea>`;
+      <textarea id="admin-player-pool" rows="14" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${poolPlayers}</textarea>`;
   } else {
     rosterSection.innerHTML = '';
   }
