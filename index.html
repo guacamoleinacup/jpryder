@@ -1689,13 +1689,16 @@ function renderAllTimeLeaderboard() {
     return `<button onclick="atlSortBy('${sortCol}')" style="background:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${active?'var(--gold)':'var(--text-light)'};text-align:${align};padding:0;width:100%">${label}${arrow}</button>`;
   };
 
-  const makeRow = (p) => {
+  const makeRow = (p, displayIdx) => {
+    const isDefaultSort = _atlSort.col === 'rank';
     const ri = trueRank[p.name];
-    const medal = ri === 0 ? '🥇' : ri === 1 ? '🥈' : ri === 2 ? '🥉' : `${ri+1}.`;
+    const medal = isDefaultSort
+      ? (ri === 0 ? '🥇' : ri === 1 ? '🥈' : ri === 2 ? '🥉' : `${ri+1}.`)
+      : `${displayIdx+1}.`;
     const winPctDisp = Math.round(p.winPct * 100);
     const escaped = p.name.replace(/'/g, "\\'");
     return `<div style="display:grid;grid-template-columns:${cols};gap:4px;align-items:center;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:0.75rem">
-      <span style="font-size:${ri<3?'0.9rem':'0.7rem'};text-align:center;line-height:1">${medal}</span>
+      <span style="font-size:${isDefaultSort&&ri<3?'0.9rem':'0.7rem'};text-align:center;line-height:1">${medal}</span>
       <button class="player-name-btn" onclick="openPlayerModal('${escaped}')">${p.name}</button>
       <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${p.wins}</span>
       <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${winPctDisp}%</span>
@@ -1706,8 +1709,8 @@ function renderAllTimeLeaderboard() {
 
   const top10 = all.slice(0, 10);
   const rest = all.slice(10);
-  const topRows = top10.map(p => makeRow(p)).join('');
-  const restRows = rest.map(p => makeRow(p)).join('');
+  const topRows = top10.map((p, i) => makeRow(p, i)).join('');
+  const restRows = rest.map((p, i) => makeRow(p, i + 10)).join('');
   const expandBtn = rest.length > 0 ? `
     <div id="atl-rest" style="display:none">${restRows}</div>
     <button onclick="toggleAllTimeExpand(this)" style="width:100%;padding:8px;background:none;border:none;border-top:1px solid var(--cream-dark);font-family:'Montserrat',sans-serif;font-size:0.65rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);cursor:pointer;margin-top:4px">
