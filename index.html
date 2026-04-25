@@ -1496,9 +1496,32 @@ let _weatherCache = null;
 async function fetchWeather() {
   if (_weatherCache) return _weatherCache;
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FChicago&start_date=2026-06-26&end_date=2026-06-28`;
+    const eventStart = new Date('2026-06-26');
+    const today = new Date();
+    const daysUntil = Math.ceil((eventStart - today) / (1000*60*60*24));
+
+    let startDate, endDate, labels;
+    if (daysUntil <= 16) {
+      // Close enough — show actual event forecast
+      startDate = '2026-06-26';
+      endDate = '2026-06-28';
+      labels = ['Fri Jun 26', 'Sat Jun 27', 'Sun Jun 28'];
+    } else {
+      // Too far out — show current 3-day forecast instead
+      const fmt = d => d.toISOString().split('T')[0];
+      const d0 = new Date(); d0.setDate(d0.getDate());
+      const d1 = new Date(); d1.setDate(d1.getDate()+1);
+      const d2 = new Date(); d2.setDate(d2.getDate()+2);
+      startDate = fmt(d0);
+      endDate = fmt(d2);
+      labels = ['Today', 'Tomorrow', d2.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})];
+    }
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FChicago&start_date=${startDate}&end_date=${endDate}`;
     const res = await fetch(url);
     const data = await res.json();
+    data._labels = labels;
+    data._isEventForecast = daysUntil <= 16;
     _weatherCache = data;
     return data;
   } catch(e) { return null; }
@@ -1532,6 +1555,8 @@ async function renderWeather() {
   if (!data || !data.daily) { wrap.innerHTML = ''; return; }
 
   const { time, temperature_2m_max, temperature_2m_min, precipitation_probability_max, weathercode, windspeed_10m_max } = data.daily;
+  const labels = data._labels || WEATHER_LABELS;
+  const isEvent = data._isEventForecast;
   const days = time.map((t, i) => ({
     max: Math.round(temperature_2m_max[i]),
     min: Math.round(temperature_2m_min[i]),
@@ -1542,17 +1567,14 @@ async function renderWeather() {
 
   wrap.innerHTML = `
     <div style="border-top:1px solid rgba(201,168,76,0.15);padding:12px 20px 14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold)">⛳ Golf Week Forecast</div>
-        <div style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:rgba(248,245,238,0.35)">
-          <div style="width:5px;height:5px;border-radius:50%;background:#4caf50;flex-shrink:0"></div>
-          Wisconsin Dells
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:4px">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold)">⛳ ${isEvent ? 'Golf Week Forecast' : 'Current Forecast · Wisconsin Dells'}</div>
+        ${!isEvent ? `<div style="font-size:0.55rem;color:rgba(248,245,238,0.3)">Event forecast available closer to Jun 26</div>` : ''}
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         ${days.map((d, i) => `
           <div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.04);border-radius:3px">
-            <div style="font-size:0.6rem;font-weight:700;color:rgba(248,245,238,0.6);margin-bottom:4px">${WEATHER_LABELS[i]}</div>
+            <div style="font-size:0.6rem;font-weight:700;color:rgba(248,245,238,0.6);margin-bottom:4px">${labels[i]}</div>
             <div style="font-size:1.3rem;margin-bottom:4px">${weatherIcon(d.code)}</div>
             <div style="font-size:0.72rem;font-weight:700;color:var(--cream)">${d.max}° <span style="font-weight:400;color:rgba(248,245,238,0.4)">${d.min}°</span></div>
             <div style="font-size:0.6rem;color:rgba(248,245,238,0.45);margin-top:3px">💧 ${d.precip}%</div>
