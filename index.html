@@ -1776,6 +1776,8 @@ function initNomState(roundIdx) {
   const ri = roundIdx !== undefined ? roundIdx : 0;
   const round = d.rounds && d.rounds[ri];
   const isTeamRound = round && round.multiplier === 0.5;
+  // Round 0=Jake nominates, 1=Travis nominates, 2=Jake nominates
+  const jakeNominatesFirst = ri !== 1;
   const playersPerSide = isTeamRound ? 2 : 1;
 
   // Get existing pairings for this round
@@ -1802,10 +1804,10 @@ function initNomState(roundIdx) {
     pairings: [...existingPairings],
     playersPerSide,
     isTeamRound,
-    // Current pick state: jake picks first, then travis responds
-    pickingJake: true,  // true = Jake nominating, false = Travis responding
-    currentJakePick: [], // Jake's selected players for current pairing
-    currentTravisPick: [], // Travis's selected players for current pairing
+    jakeNominatesFirst,
+    pickingJake: jakeNominatesFirst,
+    currentJakePick: [],
+    currentTravisPick: [],
     roundName: round ? round.name : 'Round ' + (ri + 1),
     roundFormat: round ? round.format : ''
   };
@@ -1844,16 +1846,23 @@ function renderNominations() {
       <div class="nom-pick-name" style="font-size:1.2rem">Round ${s.ri+1} Complete ✓</div>
     </div>`;
   } else if (s.pickingJake) {
+    const nominatorName = s.jakeNominatesFirst ? `${s.jakeTeam} (Jake)` : `${s.travisTeam} (Travis)`;
+    const nominatorColor = s.jakeNominatesFirst ? 'rgba(150,220,180,1)' : 'rgba(240,150,150,1)';
+    const selectedNames = s.jakeNominatesFirst ? s.currentJakePick.map(p=>p.name).join(' & ') : s.currentTravisPick.map(p=>p.name).join(' & ');
     bannerHTML = `<div class="nom-pick-banner">
       <div class="nom-pick-label">Nominating — Pairing ${s.pairings.length + 1}</div>
-      <div class="nom-pick-name" style="color:rgba(150,220,180,1)">${s.jakeTeam} (Jake)</div>
-      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} from your team${s.currentJakePick.length > 0 ? ` · ${s.currentJakePick.map(p=>p.name).join(' & ')} selected` : ''}</div>
+      <div class="nom-pick-name" style="color:${nominatorColor}">${nominatorName}</div>
+      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} from your team${selectedNames ? ` · ${selectedNames} selected` : ''}</div>
     </div>`;
   } else {
-    bannerHTML = `<div class="nom-pick-banner" style="border-color:rgba(220,100,100,0.6)">
+    const responderName = s.jakeNominatesFirst ? `${s.travisTeam} (Travis)` : `${s.jakeTeam} (Jake)`;
+    const responderColor = s.jakeNominatesFirst ? 'rgba(240,150,150,1)' : 'rgba(150,220,180,1)';
+    const nominatedNames = s.jakeNominatesFirst ? s.currentJakePick.map(p=>p.name).join(' & ') : s.currentTravisPick.map(p=>p.name).join(' & ');
+    const respondingNames = s.jakeNominatesFirst ? s.currentTravisPick.map(p=>p.name).join(' & ') : s.currentJakePick.map(p=>p.name).join(' & ');
+    bannerHTML = `<div class="nom-pick-banner" style="border-color:${s.jakeNominatesFirst?'rgba(220,100,100,0.6)':'rgba(100,200,140,0.6)'}">
       <div class="nom-pick-label">Responding — Pairing ${s.pairings.length + 1}</div>
-      <div class="nom-pick-name" style="color:rgba(240,150,150,1)">${s.travisTeam} (Travis)</div>
-      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} to face ${s.currentJakePick.map(p=>p.name).join(' & ')}${s.currentTravisPick.length > 0 ? ` · ${s.currentTravisPick.map(p=>p.name).join(' & ')} selected` : ''}</div>
+      <div class="nom-pick-name" style="color:${responderColor}">${responderName}</div>
+      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} to face ${nominatedNames}${respondingNames ? ` · ${respondingNames} selected` : ''}</div>
     </div>`;
   }
 
@@ -1870,8 +1879,10 @@ function renderNominations() {
         <button class="nom-player-remove" onclick="nomDeselect('${p.name.replace(/'/g,"\\'")}','${side}')">✕</button>
       </div>
     </div>`;
-    const canPick = (side === 'jake' && s.pickingJake && s.currentJakePick.length < s.playersPerSide) ||
-                    (side === 'travis' && !s.pickingJake && s.currentTravisPick.length < s.playersPerSide);
+    const nominatingSide = s.jakeNominatesFirst ? 'jake' : 'travis';
+    const respondingSide = s.jakeNominatesFirst ? 'travis' : 'jake';
+    const canPick = (side === nominatingSide && s.pickingJake && (side === 'jake' ? s.currentJakePick.length : s.currentTravisPick.length) < s.playersPerSide) ||
+                    (side === respondingSide && !s.pickingJake && (side === 'jake' ? s.currentJakePick.length : s.currentTravisPick.length) < s.playersPerSide);
     return `<div class="nom-player-tile" onclick="${canPick ? `nomSelect('${p.name.replace(/'/g,"\\'")}','${side}')` : ''}" 
       style="cursor:${canPick?'pointer':'default'};opacity:${canPick?1:0.5}">
       <span>${p.name}</span>
@@ -1892,7 +1903,7 @@ function renderNominations() {
   }).join('');
 
   // Confirm pairing button
-  const canConfirm = s.currentJakePick.length === s.playersPerSide && s.currentTravisPick.length === s.playersPerSide;
+  const canConfirm = !s.pickingJake && s.currentJakePick.length === s.playersPerSide && s.currentTravisPick.length === s.playersPerSide;
   const confirmBtn = !s.pickingJake && canConfirm ? `
     <div style="text-align:center;margin-top:16px">
       <button onclick="nomConfirmPairing()" style="padding:12px 32px;background:var(--forest-deep);color:var(--cream);border:2px solid var(--gold);border-radius:3px;font-family:'Montserrat',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;cursor:pointer">
@@ -1921,7 +1932,7 @@ function renderNominations() {
   document.getElementById('nom-content').innerHTML = `
   <div class="nom-wrap">
     <div class="nom-header">
-      <h2>Nominations Night</h2>
+      <h2>Nominations</h2>
       <p>${yr} JP Ryder Cup · ${s.roundName} · ${s.roundFormat}</p>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap">${roundTabs}</div>
@@ -1955,10 +1966,19 @@ function nomSelect(name, side) {
   const pick = side === 'jake' ? s.currentJakePick : s.currentTravisPick;
   const player = avail.find(p => p.name === name);
   if (!player) return;
+
+  // Determine if this side is currently nominating or responding
+  const nominatingSide = s.jakeNominatesFirst ? 'jake' : 'travis';
+  const respondingSide = s.jakeNominatesFirst ? 'travis' : 'jake';
+  const isNominating = s.pickingJake;
+
+  if (isNominating && side !== nominatingSide) return;
+  if (!isNominating && side !== respondingSide) return;
+
   if (pick.length < s.playersPerSide) {
     pick.push(player);
-    // If jake filled their picks, switch to travis
-    if (side === 'jake' && pick.length === s.playersPerSide) {
+    // Switch to responder once nominator fills their picks
+    if (isNominating && pick.length === s.playersPerSide) {
       s.pickingJake = false;
     }
   }
@@ -1969,10 +1989,12 @@ function nomDeselect(name, side) {
   const s = _nomState;
   if (side === 'jake') {
     s.currentJakePick = s.currentJakePick.filter(p => p.name !== name);
-    s.pickingJake = true;
   } else {
     s.currentTravisPick = s.currentTravisPick.filter(p => p.name !== name);
   }
+  // If we deselected from the nominating side, go back to nominating
+  const nominatingSide = s.jakeNominatesFirst ? 'jake' : 'travis';
+  if (side === nominatingSide) s.pickingJake = true;
   renderNominations();
 }
 
@@ -1985,14 +2007,13 @@ function nomConfirmPairing() {
   if (s.currentTravisPick[1]) pairing.travis2 = s.currentTravisPick[1].name;
   s.pairings.push(pairing);
 
-  // Remove paired players from available
   s.currentJakePick.forEach(p => { s.jakeAvail = s.jakeAvail.filter(a => a.name !== p.name); });
   s.currentTravisPick.forEach(p => { s.travisAvail = s.travisAvail.filter(a => a.name !== p.name); });
 
-  // Reset for next pairing — Jake always nominates first
+  // Reset for next pairing — nominator goes first again
   s.currentJakePick = [];
   s.currentTravisPick = [];
-  s.pickingJake = true;
+  s.pickingJake = true; // pickingJake=true means "nominator's turn", not literally Jake
   renderNominations();
 }
 
