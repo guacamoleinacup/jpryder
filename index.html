@@ -2019,6 +2019,13 @@ function renderNominations() {
       Saves pairings to site. Enter scores via Admin after the round.
     </div>` : '';
 
+  const resetBtn = (_nomPairings||[]).length > 0 ? `
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="nomResetRound()" style="background:none;border:none;font-size:0.65rem;color:var(--text-light);cursor:pointer;text-decoration:underline;letter-spacing:0.05em">
+        Reset Round ${ri + 1} pairings
+      </button>
+    </div>` : '';
+
   document.getElementById('nom-content').innerHTML = `
   <div class="nom-wrap">
     <div class="nom-header">
@@ -2040,7 +2047,23 @@ function renderNominations() {
     ${inProgressHTML}
     ${pairingsHTML}
     ${saveBtn}
+    ${resetBtn}
   </div>`;
+}
+
+async function nomResetRound() {
+  if (!confirm(`Reset all Round ${_nomRound + 1} pairings? This will also clear saved pairings from the site.`)) return;
+  const yr = DB.liveYear || '2026';
+  if (DB.years[yr].rounds && DB.years[yr].rounds[_nomRound]) {
+    DB.years[yr].rounds[_nomRound].pairings = [];
+  }
+  const ok = await saveData();
+  if (ok) {
+    localStorage.removeItem(CACHE_KEY);
+    nomInit(_nomRound);
+    renderNominations();
+    showToast(`✓ Round ${_nomRound + 1} pairings cleared`);
+  }
 }
 
 function nomSwitchRound(ri) {
