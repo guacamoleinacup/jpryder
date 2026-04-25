@@ -1761,7 +1761,7 @@ function renderHistory() {
     el.innerHTML = renderAllTimeLeaderboard() + ['2026','2025','2024','2023'].map(yr => buildYearCard(yr)).join('');
   } catch(e) {
     console.error('renderHistory error:', e);
-    el.innerHTML = '<div class="loading">Error loading history — please refresh.</div>';
+    el.innerHTML = `<div class="loading">Error: ${e.message}</div>`;
   }
 }
 
@@ -1785,7 +1785,13 @@ function buildYearCard(yr) {
 
   // ── ROUNDS-BASED YEAR (2026+) ──
   if (d.rounds) {
-    const { jakeTeam: jakeTotal, travisTeam: travisTotal, players } = calcScores(d);
+    let jakeTotal = 0, travisTotal = 0, players = {};
+    try {
+      const scores = calcScores(d);
+      jakeTotal = scores.jakeTeam;
+      travisTotal = scores.travisTeam;
+      players = scores.players;
+    } catch(e) { console.warn('calcScores error for', yr, e); }
 
     const roundRows = (d.rounds||[]).map((r, ri) => {
       const mult = r.multiplier !== undefined ? r.multiplier : (ri < 2 ? 0.5 : 1);
