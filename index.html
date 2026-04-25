@@ -1651,7 +1651,7 @@ function buildAllTimeLeaderboard() {
   return allPlayers;
 }
 
-let _atlSort = { col: 'wins', dir: -1 };
+let _atlSort = { col: 'rank', dir: 1 };
 
 function renderAllTimeLeaderboard() {
   const players = buildAllTimeLeaderboard();
@@ -1669,8 +1669,9 @@ function renderAllTimeLeaderboard() {
 
   const { col, dir } = _atlSort;
   all.sort((a, b) => {
-    if (col === 'rank') return defaultSort(a, b);
+    if (col === 'rank') return dir === 1 ? defaultSort(a, b) : defaultSort(b, a);
     if (col === 'player') return dir * a.name.localeCompare(b.name);
+    if (col === 'winPct') return dir * (b.winPct - a.winPct);
     return dir * (b[col] - a[col]);
   });
 
