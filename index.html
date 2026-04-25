@@ -1463,7 +1463,10 @@ function renderLiveLeaderboard() {
       </div>
     </div>
     <button class="lb-expand-btn" onclick="toggleLbPlayers(this)">▼ Individual Scores</button>` : ''}
+    <div id="lb-weather"></div>
   </div>`;
+
+  renderWeather();
 }
 
 function toggleLbPlayers(btn) {
@@ -1471,6 +1474,82 @@ function toggleLbPlayers(btn) {
   const showing = detail.style.display !== 'none';
   detail.style.display = showing ? 'none' : 'block';
   btn.textContent = showing ? '▼ Individual Scores' : '▲ Hide Individual Scores';
+}
+
+// ── WEATHER ──
+const WEATHER_LAT = 43.6275;
+const WEATHER_LON = -89.7718;
+const WEATHER_LABELS = ['Fri Jun 26', 'Sat Jun 27', 'Sun Jun 28'];
+const WEATHER_COURSES = ['Reedsburg CC', 'Trappers Turn', 'Wild Rock'];
+let _weatherCache = null;
+
+async function fetchWeather() {
+  if (_weatherCache) return _weatherCache;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FChicago&start_date=2026-06-26&end_date=2026-06-28`;
+    const res = await fetch(url);
+    const data = await res.json();
+    _weatherCache = data;
+    return data;
+  } catch(e) { return null; }
+}
+
+function weatherIcon(code) {
+  if (code === 0) return '☀️';
+  if (code <= 2) return '⛅';
+  if (code <= 3) return '☁️';
+  if (code <= 49) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '❄️';
+  if (code <= 82) return '🌦️';
+  if (code <= 99) return '⛈️';
+  return '🌡️';
+}
+
+async function renderWeather() {
+  const wrap = document.getElementById('lb-weather');
+  if (!wrap) return;
+
+  wrap.innerHTML = `
+    <div style="border-top:1px solid rgba(201,168,76,0.15);padding:10px 20px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:0.6rem;color:rgba(248,245,238,0.35)">
+        <svg style="animation:spin 1s linear infinite;flex-shrink:0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        Fetching forecast...
+      </div>
+    </div>`;
+
+  const data = await fetchWeather();
+  if (!data || !data.daily) { wrap.innerHTML = ''; return; }
+
+  const { time, temperature_2m_max, temperature_2m_min, precipitation_probability_max, weathercode, windspeed_10m_max } = data.daily;
+  const days = time.map((t, i) => ({
+    max: Math.round(temperature_2m_max[i]),
+    min: Math.round(temperature_2m_min[i]),
+    precip: precipitation_probability_max[i],
+    wind: Math.round(windspeed_10m_max[i]),
+    code: weathercode[i],
+  }));
+
+  wrap.innerHTML = `
+    <div style="border-top:1px solid rgba(201,168,76,0.15);padding:12px 20px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:0.58rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold)">⛳ Golf Week Forecast</div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:rgba(248,245,238,0.35)">
+          <div style="width:5px;height:5px;border-radius:50%;background:#4caf50;flex-shrink:0"></div>
+          Wisconsin Dells
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        ${days.map((d, i) => `
+          <div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.04);border-radius:3px">
+            <div style="font-size:0.6rem;font-weight:700;color:rgba(248,245,238,0.6);margin-bottom:4px">${WEATHER_LABELS[i]}</div>
+            <div style="font-size:1.3rem;margin-bottom:4px">${weatherIcon(d.code)}</div>
+            <div style="font-size:0.72rem;font-weight:700;color:var(--cream)">${d.max}° <span style="font-weight:400;color:rgba(248,245,238,0.4)">${d.min}°</span></div>
+            <div style="font-size:0.6rem;color:rgba(248,245,238,0.45);margin-top:3px">💧 ${d.precip}%</div>
+            <div style="font-size:0.6rem;color:rgba(248,245,238,0.45);margin-top:2px">💨 ${d.wind} mph</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 // ── RENDER HISTORY ──
