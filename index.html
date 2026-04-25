@@ -1765,6 +1765,9 @@ function openPlayerModal(name) {
   const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
   const cb = '?t=' + Date.now();
 
+  const photoEl = document.getElementById('pmodal-photo');
+  const placeholderEl = document.getElementById('pmodal-placeholder');
+  const photoWrap = document.getElementById('pmodal-photo-wrap');
   photoEl.style.display = 'block';
   placeholderEl.style.display = 'none';
   photoEl.src = `${GITHUB_BASE}players/${slug}.jpg${cb}`;
