@@ -1763,17 +1763,25 @@ function openPlayerModal(name) {
   });
 
   const slug = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const slugCap = name.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'');
   const cb = '?t=' + Date.now();
+  const variants = [
+    `${GITHUB_BASE}players/${slug}.jpg${cb}`,
+    `${GITHUB_BASE}players/${slug}.jpeg${cb}`,
+    `${GITHUB_BASE}players/${slugCap}.jpg${cb}`,
+    `${GITHUB_BASE}players/${slugCap}.jpeg${cb}`,
+  ];
+  let vi = 0;
 
   const photoEl = document.getElementById('pmodal-photo');
   const placeholderEl = document.getElementById('pmodal-placeholder');
   const photoWrap = document.getElementById('pmodal-photo-wrap');
   photoEl.style.display = 'block';
   placeholderEl.style.display = 'none';
-  photoEl.src = `${GITHUB_BASE}players/${slug}.jpg${cb}`;
   photoEl.onerror = () => {
-    if (photoEl.src.includes('.jpg') && !photoEl.src.includes('.jpeg')) {
-      photoEl.src = `${GITHUB_BASE}players/${slug}.jpeg${cb}`;
+    vi++;
+    if (vi < variants.length) {
+      photoEl.src = variants[vi];
     } else {
       photoEl.style.display='none';
       placeholderEl.style.display='block';
@@ -1781,6 +1789,7 @@ function openPlayerModal(name) {
       photoWrap.onclick = null;
     }
   };
+  photoEl.src = variants[0];
   photoEl.onload = () => {
     photoWrap.style.cursor = 'zoom-in';
     photoWrap.onclick = () => openPhotoLightbox(photoEl.src);
