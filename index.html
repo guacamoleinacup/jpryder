@@ -1651,68 +1651,99 @@ function buildAllTimeLeaderboard() {
   return allPlayers;
 }
 
+let _atlSort = { col: 'wins', dir: -1 }; // -1 = desc
+
 function renderAllTimeLeaderboard() {
   const players = buildAllTimeLeaderboard();
-  const sorted = Object.entries(players)
-    .filter(([,v]) => v.appearances > 0)
-    .sort((a,b) => {
-      // Sort by wins, then win%, then appearances
-      if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
-      const aPct = a[1].wins / a[1].appearances;
-      const bPct = b[1].wins / b[1].appearances;
-      if (bPct !== aPct) return bPct - aPct;
-      return b[1].appearances - a[1].appearances;
-    });
-  if (!sorted.length) return '';
-  const cols = '28px 1fr 36px 32px 44px 48px 52px';
-  const top10 = sorted.slice(0, 10);
-  const rest = sorted.slice(10);
-  const makeRow = (name, v, i) => {
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
-    const winPct = v.appearances > 0 ? Math.round((v.wins / v.appearances) * 100) : 0;
-    const escaped = name.replace(/'/g, "\\'");
-    // Calculate raw and contribution pts from rounds-based years
-    let rawTotal = 0;
+
+  // Pre-calc raw pts for each player
+  const rawPts = {};
+  Object.keys(players).forEach(name => {
+    let raw = 0;
     ['2026'].forEach(yr => {
       const d = DB.years[yr];
       if (!d || !d.rounds) return;
-      const { players } = calcScores(d);
-      if (players[name]) {
-        rawTotal += players[name].roundPts.reduce((s,r) => s + (r.raw||0), 0);
-      }
+      const { players: scored } = calcScores(d);
+      if (scored[name]) raw += scored[name].roundPts.reduce((s,r) => s + (r.raw||0), 0);
     });
+    rawPts[name] = raw;
+  });
+
+  const all = Object.entries(players).filter(([,v]) => v.appearances > 0).map(([name, v]) => ({
+    name, ...v, raw: rawPts[name] || 0,
+    winPct: v.appearances > 0 ? v.wins / v.appearances : 0
+  }));
+
+  const { col, dir } = _atlSort;
+  all.sort((a, b) => {
+    const av = col === 'player' ? a.name : col === 'winPct' ? a.winPct : a[col];
+    const bv = col === 'player' ? b.name : col === 'winPct' ? b.winPct : b[col];
+    if (av === bv) return 0;
+    return av < bv ? dir : -dir;
+  });
+
+  if (!all.length) return '';
+  const cols = '28px 1fr 36px 32px 44px 48px 52px';
+
+  const hdrBtn = (label, sortCol, align='right') => {
+    const active = _atlSort.col === sortCol;
+    const arrow = active ? (_atlSort.dir === -1 ? ' ▼' : ' ▲') : '';
+    return `<button onclick="atlSortBy('${sortCol}')" style="background:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${active?'var(--gold)':'var(--text-light)'};text-align:${align};padding:0;width:100%">${label}${arrow}</button>`;
+  };
+
+  const makeRow = (p, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
+    const winPctDisp = Math.round(p.winPct * 100);
+    const escaped = p.name.replace(/'/g, "\\'");
     return `<div style="display:grid;grid-template-columns:${cols};gap:4px;align-items:center;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:0.75rem">
       <span style="font-size:${i<3?'0.9rem':'0.7rem'};text-align:center;line-height:1">${medal}</span>
-      <button class="player-name-btn" onclick="openPlayerModal('${escaped}')">${name}</button>
-      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${v.appearances}</span>
-      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${v.wins}</span>
-      <span style="font-weight:700;color:var(--forest-deep);font-size:0.75rem;text-align:right">${winPct}%</span>
-      <span style="font-size:0.66rem;color:${rawTotal>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${rawTotal}</span>
-      <span style="font-size:0.66rem;color:${v.pts>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${fmt(v.pts)}</span>
+      <button class="player-name-btn" onclick="openPlayerModal('${escaped}')">${p.name}</button>
+      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${p.appearances}</span>
+      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${p.wins}</span>
+      <span style="font-weight:700;color:var(--forest-deep);font-size:0.75rem;text-align:right">${winPctDisp}%</span>
+      <span style="font-size:0.66rem;color:${p.raw>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${p.raw}</span>
+      <span style="font-size:0.66rem;color:${p.pts>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${fmt(p.pts)}</span>
     </div>`;
   };
-  const hdr = `<span></span><span>Player</span><span style="text-align:right">Apps</span><span style="text-align:right">Wins</span><span style="text-align:right">Win%</span><span style="text-align:right">Raw</span><span style="text-align:right">Pts</span>`;
-  const topRows = top10.map(([name, v], i) => makeRow(name, v, i)).join('');
-  const restRows = rest.map(([name, v], i) => makeRow(name, v, i + 10)).join('');
+
+  const top10 = all.slice(0, 10);
+  const rest = all.slice(10);
+  const topRows = top10.map((p, i) => makeRow(p, i)).join('');
+  const restRows = rest.map((p, i) => makeRow(p, i + 10)).join('');
   const expandBtn = rest.length > 0 ? `
     <div id="atl-rest" style="display:none">${restRows}</div>
     <button onclick="toggleAllTimeExpand(this)" style="width:100%;padding:8px;background:none;border:none;border-top:1px solid var(--cream-dark);font-family:'Montserrat',sans-serif;font-size:0.65rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light);cursor:pointer;margin-top:4px">
-      ▼ Show all ${sorted.length} players
+      ▼ Show all ${all.length} players
     </button>` : '';
+
   return `<div style="background:var(--white);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:32px;box-shadow:0 2px 16px var(--shadow)">
     <div style="background:var(--forest-deep);padding:14px 20px;display:flex;justify-content:space-between;align-items:center">
       <div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--cream)">All-Time Leaderboard</div>
         <div style="font-size:0.62rem;color:var(--gold-light);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px">2023 – Present</div>
       </div>
-      <div style="font-size:0.58rem;color:rgba(248,245,238,0.4);text-align:right;line-height:1.6">Wins → Win% → Apps<br>Raw = holes won · Pts = contribution</div>
+      <div style="font-size:0.56rem;color:rgba(248,245,238,0.4);text-align:right;line-height:1.7">Wins → Win% → Pts → Apps<br>Raw = holes won · Pts = contribution</div>
     </div>
     <div style="padding:6px 14px 10px">
-      <div style="display:grid;grid-template-columns:${cols};gap:4px;padding:5px 0;border-bottom:2px solid var(--cream-dark);font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light)">${hdr}</div>
+      <div style="display:grid;grid-template-columns:${cols};gap:4px;padding:5px 0;border-bottom:2px solid var(--cream-dark)">
+        <span></span>
+        ${hdrBtn('Player','player','left')}
+        ${hdrBtn('Apps','appearances')}
+        ${hdrBtn('Wins','wins')}
+        ${hdrBtn('Win%','winPct')}
+        ${hdrBtn('Raw','raw')}
+        ${hdrBtn('Pts','pts')}
+      </div>
       ${topRows}
       ${expandBtn}
     </div>
   </div>`;
+}
+
+function atlSortBy(col) {
+  if (_atlSort.col === col) _atlSort.dir *= -1;
+  else { _atlSort.col = col; _atlSort.dir = col === 'player' ? 1 : -1; }
+  renderHistory();
 }
 function toggleAllTimeExpand(btn) {
   const rest = document.getElementById('atl-rest');
