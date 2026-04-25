@@ -2386,20 +2386,22 @@ function loadSettingsPanel() {
   // Show roster inputs only for live year
   const rosterSection = document.getElementById('admin-roster-section');
   if (yr === DB.liveYear) {
-    // Show playerPool first, fall back to combining jakePlayers/travisPlayers
-    const poolPlayers = (d.playerPool||[]).length > 0
-      ? (d.playerPool||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n')
-      : [
-          ...(d.jakePlayers||[]).map(p => `${p.name}, ${p.hdcp}`),
-          ...(d.travisPlayers||[]).map(p => `${p.name}, ${p.hdcp}`)
-        ].join('\n');
+    const jakeNames = (d.jakePlayers||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n');
+    const travisNames = (d.travisPlayers||[]).map(p => `${p.name}, ${p.hdcp}`).join('\n');
     rosterSection.innerHTML = `
       <div style="font-size:0.68rem;color:var(--text-light);margin:8px 0 4px;padding:6px 8px;background:var(--cream);border:1px solid var(--border);border-radius:2px">
-        Format: <strong>Player Name, handicap</strong> — one per line. E.g. <em>Christian Nilsen, 17</em><br>
-        All players go into the pool. Teams are assigned on Nominations night.
+        Format: <strong>Player Name, handicap</strong> — one per line. E.g. <em>Christian Nilsen, 17</em>
       </div>
-      <label>Player Pool (all participants)</label>
-      <textarea id="admin-player-pool" rows="14" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${poolPlayers}</textarea>`;
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+        <div>
+          <label>Jake's Players</label>
+          <textarea id="admin-jake-players" rows="12" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${jakeNames}</textarea>
+        </div>
+        <div>
+          <label>Travis's Players</label>
+          <textarea id="admin-travis-players" rows="12" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.75rem;background:var(--cream);resize:vertical">${travisNames}</textarea>
+        </div>
+      </div>`;
   } else {
     rosterSection.innerHTML = '';
   }
@@ -2413,12 +2415,6 @@ async function saveSettings() {
   const jakeTeam = document.getElementById('admin-jake-team').value.trim();
   const travisTeam = document.getElementById('admin-travis-team').value.trim();
   const tsx = document.getElementById('admin-tsx').value.trim();
-  const jakePlayers = document.getElementById('admin-jake-players') ?
-    document.getElementById('admin-jake-players').value.trim() : '';
-  const travisPlayers = document.getElementById('admin-travis-players') ?
-    document.getElementById('admin-travis-players').value.trim() : '';
-  const poolText = document.getElementById('admin-player-pool') ?
-    document.getElementById('admin-player-pool').value.trim() : '';
 
   if (!DB.years[yr]) DB.years[yr] = {};
   if (jakeTeam) DB.years[yr].jakeTeam = jakeTeam;
@@ -2438,21 +2434,14 @@ async function saveSettings() {
       }).filter(Boolean)
     : [];
 
-  // For live year: if pool entered, save to playerPool and clear team assignments
+  // Save directly to team arrays for live year
   if (yr === DB.liveYear) {
-    if (poolText) {
-      DB.years[yr].playerPool = parseRoster(poolText);
-      // Only clear team assignments if pool has changed and teams haven't been drafted yet
-      const drafted = (DB.years[yr].jakePlayers||[]).length + (DB.years[yr].travisPlayers||[]).length;
-      if (drafted === 0) {
-        DB.years[yr].jakePlayers = [];
-        DB.years[yr].travisPlayers = [];
-      }
-    } else if (jakePlayers || travisPlayers) {
-      // Legacy fallback
-      DB.years[yr].jakePlayers = parseRoster(jakePlayers);
-      DB.years[yr].travisPlayers = parseRoster(travisPlayers);
-    }
+    const jakePlayers = document.getElementById('admin-jake-players') ?
+      document.getElementById('admin-jake-players').value.trim() : '';
+    const travisPlayers = document.getElementById('admin-travis-players') ?
+      document.getElementById('admin-travis-players').value.trim() : '';
+    DB.years[yr].jakePlayers = parseRoster(jakePlayers);
+    DB.years[yr].travisPlayers = parseRoster(travisPlayers);
   }
 
   DB.nextEvent.title = document.getElementById('admin-next-title').value.trim() || DB.nextEvent.title;
