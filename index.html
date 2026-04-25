@@ -2406,6 +2406,7 @@ async function saveLive() {
     setSaveBtn('save-live-btn', 'done');
     localStorage.removeItem(CACHE_KEY);
     renderHome();
+    if (document.getElementById('sec-history').classList.contains('active')) renderHistory();
   } else {
     setSaveBtn('save-live-btn', 'reset');
   }
@@ -2493,11 +2494,11 @@ async function saveSettings() {
     renderHome();
     if (yr === DB.liveYear) {
       _nomPairings = null;
-      // Re-render nominations immediately if it's the active tab
-      if (document.getElementById('sec-nominations').classList.contains('active')) {
-        renderNominations();
-      }
     }
+    // Refresh whichever tab is currently active
+    if (document.getElementById('sec-history').classList.contains('active')) renderHistory();
+    if (document.getElementById('sec-nominations').classList.contains('active')) renderNominations();
+    if (document.getElementById('sec-gallery').classList.contains('active')) renderGallery();
   } else {
     setSaveBtn('save-settings-btn', 'reset');
   }
