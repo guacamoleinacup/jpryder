@@ -1651,39 +1651,31 @@ function buildAllTimeLeaderboard() {
   return allPlayers;
 }
 
-let _atlSort = { col: 'wins', dir: -1 }; // -1 = desc
+let _atlSort = { col: 'wins', dir: -1 };
 
 function renderAllTimeLeaderboard() {
   const players = buildAllTimeLeaderboard();
 
-  // Pre-calc raw pts for each player
-  const rawPts = {};
-  Object.keys(players).forEach(name => {
-    let raw = 0;
-    ['2026'].forEach(yr => {
-      const d = DB.years[yr];
-      if (!d || !d.rounds) return;
-      const { players: scored } = calcScores(d);
-      if (scored[name]) raw += scored[name].roundPts.reduce((s,r) => s + (r.raw||0), 0);
-    });
-    rawPts[name] = raw;
-  });
-
   const all = Object.entries(players).filter(([,v]) => v.appearances > 0).map(([name, v]) => ({
-    name, ...v, raw: rawPts[name] || 0,
-    winPct: v.appearances > 0 ? v.wins / v.appearances : 0
+    name, ...v, winPct: v.appearances > 0 ? v.wins / v.appearances : 0
   }));
+
+  const defaultSort = (a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    return b.appearances - a.appearances;
+  };
 
   const { col, dir } = _atlSort;
   all.sort((a, b) => {
-    const av = col === 'player' ? a.name : col === 'winPct' ? a.winPct : a[col];
-    const bv = col === 'player' ? b.name : col === 'winPct' ? b.winPct : b[col];
-    if (av === bv) return 0;
-    return av < bv ? dir : -dir;
+    if (col === 'rank') return defaultSort(a, b);
+    if (col === 'player') return dir * a.name.localeCompare(b.name);
+    return dir * (b[col] - a[col]);
   });
 
   if (!all.length) return '';
-  const cols = '28px 1fr 36px 32px 44px 48px 52px';
+  const cols = '28px 1fr 36px 32px 44px 52px';
 
   const hdrBtn = (label, sortCol, align='right') => {
     const active = _atlSort.col === sortCol;
@@ -1692,17 +1684,16 @@ function renderAllTimeLeaderboard() {
   };
 
   const makeRow = (p, i) => {
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
     const winPctDisp = Math.round(p.winPct * 100);
     const escaped = p.name.replace(/'/g, "\\'");
     return `<div style="display:grid;grid-template-columns:${cols};gap:4px;align-items:center;padding:5px 0;border-bottom:1px solid var(--cream-dark);font-size:0.75rem">
       <span style="font-size:${i<3?'0.9rem':'0.7rem'};text-align:center;line-height:1">${medal}</span>
       <button class="player-name-btn" onclick="openPlayerModal('${escaped}')">${p.name}</button>
-      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${p.appearances}</span>
       <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${p.wins}</span>
-      <span style="font-weight:700;color:var(--forest-deep);font-size:0.75rem;text-align:right">${winPctDisp}%</span>
-      <span style="font-size:0.66rem;color:${p.raw>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${p.raw}</span>
+      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${winPctDisp}%</span>
       <span style="font-size:0.66rem;color:${p.pts>0?'var(--text-light)':'rgba(0,0,0,0.2)'};text-align:right">${fmt(p.pts)}</span>
+      <span style="color:var(--text-light);font-size:0.66rem;text-align:right">${p.appearances}</span>
     </div>`;
   };
 
@@ -1722,17 +1713,16 @@ function renderAllTimeLeaderboard() {
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--cream)">All-Time Leaderboard</div>
         <div style="font-size:0.62rem;color:var(--gold-light);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px">2023 – Present</div>
       </div>
-      <div style="font-size:0.56rem;color:rgba(248,245,238,0.4);text-align:right;line-height:1.7">Wins → Win% → Pts → Apps<br>Raw = holes won · Pts = contribution</div>
+      <div style="font-size:0.56rem;color:rgba(248,245,238,0.4);text-align:right;line-height:1.7">Wins → Win% → Team Contrib → Apps<br>Click any column to sort</div>
     </div>
     <div style="padding:6px 14px 10px">
       <div style="display:grid;grid-template-columns:${cols};gap:4px;padding:5px 0;border-bottom:2px solid var(--cream-dark)">
-        <span></span>
+        ${hdrBtn('#','rank','center')}
         ${hdrBtn('Player','player','left')}
-        ${hdrBtn('Apps','appearances')}
         ${hdrBtn('Wins','wins')}
         ${hdrBtn('Win%','winPct')}
-        ${hdrBtn('Raw','raw')}
-        ${hdrBtn('Pts','pts')}
+        ${hdrBtn('Contrib','pts')}
+        ${hdrBtn('Apps','appearances')}
       </div>
       ${topRows}
       ${expandBtn}
