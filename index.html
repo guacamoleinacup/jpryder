@@ -940,6 +940,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <div class="next-label">Next Event</div>
       <div class="next-title" id="next-title">4th Annual JP Ryder Cup</div>
       <div class="next-details" id="next-details">Date & Location TBD · 2026</div>
+      <div id="event-countdown" style="margin-top:14px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap"></div>
     </div>
     <div class="series-board" id="series-board">
       <div class="series-side jake">
@@ -1341,6 +1342,7 @@ function renderHome() {
   document.getElementById('next-title').textContent = DB.nextEvent.title;
   document.getElementById('next-details').innerHTML =
     (DB.nextEvent.details || '').replace(/\n/g, '<br>');
+  renderCountdown();
   renderLiveLeaderboard();
 }
 
@@ -1584,11 +1586,118 @@ async function renderWeather() {
     </div>`;
 }
 
-// ── RENDER HISTORY ──
+// ── COUNTDOWN ──
+const EVENT_DATE = new Date('2026-06-25T17:00:00-05:00'); // Thursday arrivals
+
+function renderCountdown() {
+  const wrap = document.getElementById('event-countdown');
+  if (!wrap) return;
+  const now = new Date();
+  const diff = EVENT_DATE - now;
+  if (diff <= 0) {
+    wrap.innerHTML = `<div style="font-size:0.85rem;font-weight:700;color:var(--gold);letter-spacing:0.15em">🏌️ IT'S GO TIME</div>`;
+    return;
+  }
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hrs = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const secs = Math.floor((diff % (1000*60)) / 1000);
+  const unit = (val, label) => `
+    <div style="text-align:center;min-width:48px">
+      <div style="font-family:'Montserrat',sans-serif;font-size:1.6rem;font-weight:700;color:var(--gold);line-height:1">${String(val).padStart(2,'0')}</div>
+      <div style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(248,245,238,0.4);margin-top:3px">${label}</div>
+    </div>`;
+  const sep = `<div style="font-size:1.4rem;color:rgba(201,168,76,0.4);align-self:flex-start;margin-top:2px">:</div>`;
+  wrap.innerHTML = unit(days,'Days') + sep + unit(hrs,'Hrs') + sep + unit(mins,'Min') + sep + unit(secs,'Sec');
+}
+
+setInterval(renderCountdown, 1000);
+
+// ── ALL-TIME LEADERBOARD ──
+function buildAllTimeLeaderboard() {
+  const allPlayers = {};
+
+  ['2023','2024','2025','2026'].forEach(yr => {
+    const d = DB.years[yr];
+    if (!d) return;
+
+    // Legacy years — no individual scores, just track appearances and wins
+    if (!d.rounds) {
+      const processTeam = (players, won) => {
+        (players||[]).forEach(p => {
+          if (!allPlayers[p.name]) allPlayers[p.name] = { appearances: 0, wins: 0, pts: 0, years: [] };
+          allPlayers[p.name].appearances++;
+          if (won) allPlayers[p.name].wins++;
+          allPlayers[p.name].years.push(yr);
+        });
+      };
+      processTeam(d.jakePlayers, d.jakeWon === true);
+      processTeam(d.travisPlayers, d.jakeWon === false);
+      return;
+    }
+
+    // Rounds-based years — include individual points
+    const { players } = calcScores(d);
+    Object.entries(players).forEach(([name, v]) => {
+      if (!allPlayers[name]) allPlayers[name] = { appearances: 0, wins: 0, pts: 0, years: [] };
+      allPlayers[name].appearances++;
+      allPlayers[name].pts += v.totalPts;
+      allPlayers[name].years.push(yr);
+      const won = v.side === 'jake' ? d.jakeWon === true : d.jakeWon === false;
+      if (won) allPlayers[name].wins++;
+    });
+  });
+
+  return allPlayers;
+}
+
+function renderAllTimeLeaderboard() {
+  const players = buildAllTimeLeaderboard();
+  const sorted = Object.entries(players)
+    .filter(([,v]) => v.appearances > 0)
+    .sort((a,b) => {
+      // Sort by wins first, then appearances, then pts
+      if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
+      if (b[1].appearances !== a[1].appearances) return b[1].appearances - a[1].appearances;
+      return b[1].pts - a[1].pts;
+    });
+
+  if (!sorted.length) return '';
+
+  const rows = sorted.map(([name, v], i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+    const winPct = v.appearances > 0 ? Math.round((v.wins / v.appearances) * 100) : 0;
+    return `<div style="display:grid;grid-template-columns:32px 1fr auto auto auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--cream-dark);font-size:0.78rem">
+      <span style="font-size:${i<3?'1rem':'0.75rem'};text-align:center">${medal}</span>
+      <button class="player-name-btn" onclick="openPlayerModal('${name.replace(/'/g,"\\'")}')">${name}</button>
+      <span style="color:var(--text-light);font-size:0.68rem;text-align:center">${v.appearances}x</span>
+      <span style="color:var(--text-light);font-size:0.68rem;text-align:center">${v.wins}W</span>
+      <span style="font-weight:700;color:var(--forest-deep);text-align:right">${winPct}%</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:32px;box-shadow:0 2px 16px var(--shadow)">
+      <div style="background:var(--forest-deep);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--cream)">All-Time Roster</div>
+          <div style="font-size:0.62rem;color:var(--gold-light);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px">2023 – Present</div>
+        </div>
+        <div style="font-size:0.6rem;color:rgba(248,245,238,0.4);text-align:right;line-height:1.6">
+          Sorted by wins<br>Win % shown
+        </div>
+      </div>
+      <div style="padding:8px 20px 12px">
+        <div style="display:grid;grid-template-columns:32px 1fr auto auto auto;gap:8px;padding:6px 0;border-bottom:2px solid var(--cream-dark);font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-light)">
+          <span></span><span>Player</span><span style="text-align:center">Apps</span><span style="text-align:center">Wins</span><span style="text-align:right">Win%</span>
+        </div>
+        ${rows}
+      </div>
+    </div>`;
+}
 function renderHistory() {
   const el = document.getElementById('history-content');
-  const years = ['2026','2025','2024','2023'];
-  el.innerHTML = years.map(yr => buildYearCard(yr)).join('');
+  el.innerHTML = renderAllTimeLeaderboard() + ['2026','2025','2024','2023'].map(yr => buildYearCard(yr)).join('');
 }
 
 function formatHdcp(h) {
