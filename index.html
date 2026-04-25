@@ -2483,8 +2483,13 @@ async function saveSettings() {
     setSaveBtn('save-settings-btn', 'done');
     localStorage.removeItem(CACHE_KEY);
     renderHome();
-    // Reset nominations state so it reloads fresh next time you open that tab
-    if (yr === DB.liveYear) _nomPairings = null;
+    if (yr === DB.liveYear) {
+      _nomPairings = null;
+      // Re-render nominations immediately if it's the active tab
+      if (document.getElementById('sec-nominations').classList.contains('active')) {
+        renderNominations();
+      }
+    }
   } else {
     setSaveBtn('save-settings-btn', 'reset');
   }
