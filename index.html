@@ -1277,6 +1277,7 @@ async function fetchFromJSONBin() {
       renderHome();
     }
     setLiveStatus(true);
+    if (document.getElementById('sec-history').classList.contains('active')) renderHistory();
   } catch(e) {
     console.warn('JSONBin load failed');
     setLiveStatus(false);
@@ -1637,15 +1638,17 @@ function buildAllTimeLeaderboard() {
     }
 
     // Rounds-based years — include individual points
-    const { players } = calcScores(d);
-    Object.entries(players).forEach(([name, v]) => {
-      if (!allPlayers[name]) allPlayers[name] = { appearances: 0, wins: 0, pts: 0, years: [] };
-      allPlayers[name].appearances++;
-      allPlayers[name].pts += v.totalPts;
-      allPlayers[name].years.push(yr);
-      const won = v.side === 'jake' ? d.jakeWon === true : d.jakeWon === false;
-      if (won) allPlayers[name].wins++;
-    });
+    try {
+      const { players } = calcScores(d);
+      Object.entries(players).forEach(([name, v]) => {
+        if (!allPlayers[name]) allPlayers[name] = { appearances: 0, wins: 0, pts: 0, years: [] };
+        allPlayers[name].appearances++;
+        allPlayers[name].pts += v.totalPts;
+        allPlayers[name].years.push(yr);
+        const won = v.side === 'jake' ? d.jakeWon === true : d.jakeWon === false;
+        if (won) allPlayers[name].wins++;
+      });
+    } catch(e) { console.warn('calcScores failed for', yr, e); }
   });
 
   return allPlayers;
@@ -1754,7 +1757,12 @@ function toggleAllTimeExpand(btn) {
 
 function renderHistory() {
   const el = document.getElementById('history-content');
-  el.innerHTML = renderAllTimeLeaderboard() + ['2026','2025','2024','2023'].map(yr => buildYearCard(yr)).join('');
+  try {
+    el.innerHTML = renderAllTimeLeaderboard() + ['2026','2025','2024','2023'].map(yr => buildYearCard(yr)).join('');
+  } catch(e) {
+    console.error('renderHistory error:', e);
+    el.innerHTML = '<div class="loading">Error loading history — please refresh.</div>';
+  }
 }
 
 function formatHdcp(h) {
