@@ -1890,14 +1890,29 @@ function renderNominations() {
   }
 
   // ── PLAYER TILES ──
-  const makeTiles = (players, side, avail, pickedArr, isActiveSide) => {
+  const makeTiles = (players, side, pickedArr, isActiveSide) => {
     return players.map(p => {
       const isPaired = side === 'jake' ? pairedJake.has(p.name) : pairedTravis.has(p.name);
-      const isSelected = pickedArr.some(x => x.name === p.name);
+      const isNomSelected = _nomPick.nominator.some(x => x.name === p.name);
+      const isResSelected = _nomPick.responder.some(x => x.name === p.name);
+      const isSelected = isNomSelected || isResSelected;
       const canPick = isActiveSide && !isPaired && !isSelected && pickedArr.length < playersPerPick;
 
-      if (isSelected) return `<div class="nom-player-tile" style="background:rgba(201,168,76,0.15);border-left:3px solid var(--gold)">
-        <span style="font-weight:700">${p.name}</span>
+      if (isPaired) return `<div class="nom-player-tile" style="opacity:0.3;cursor:default;text-decoration:line-through">
+        <span>${p.name}</span>
+        <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
+      </div>`;
+
+      if (isNomSelected) return `<div class="nom-player-tile" style="background:rgba(201,168,76,0.25);border-left:4px solid var(--gold);font-weight:700">
+        <span>⭐ ${p.name}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
+          <button class="nom-player-remove" onclick="nomDeselect('${p.name.replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>`;
+
+      if (isResSelected) return `<div class="nom-player-tile" style="background:rgba(100,160,220,0.15);border-left:4px solid #6aa0dc;font-weight:700">
+        <span>⭐ ${p.name}</span>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
           <button class="nom-player-remove" onclick="nomDeselect('${p.name.replace(/'/g,"\\'")}')">✕</button>
@@ -1905,7 +1920,8 @@ function renderNominations() {
       </div>`;
 
       return `<div class="nom-player-tile" onclick="${canPick ? `nomSelectPlayer('${p.name.replace(/'/g,"\\'")}','${side}')` : ''}"
-        style="opacity:${isPaired?0.3:canPick?1:0.5};cursor:${canPick?'pointer':'default'}">
+        style="opacity:${canPick?1:0.45};cursor:${canPick?'pointer':'default'}${canPick?' transition:background 0.15s;':''}"
+        ${canPick ? `onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background=''"` : ''}>
         <span>${p.name}</span>
         <span class="nom-player-hdcp">${formatHdcp(p.hdcp)}</span>
       </div>`;
@@ -1913,42 +1929,57 @@ function renderNominations() {
   };
 
   const nomIsJake = nomSide === 'jake';
-  const jakeTiles = makeTiles(jakePlayers, 'jake', jakeAvail,
+  const jakeTiles = makeTiles(jakePlayers, 'jake',
     nomIsJake ? (_nomStep==='nominating' ? nomPicked : []) : (_nomStep==='responding' ? resPicked : []),
     nomIsJake ? (_nomStep==='nominating') : (_nomStep==='responding')
   );
-  const travisTiles = makeTiles(travisPlayers, 'travis', travisAvail,
+  const travisTiles = makeTiles(travisPlayers, 'travis',
     !nomIsJake ? (_nomStep==='nominating' ? nomPicked : []) : (_nomStep==='responding' ? resPicked : []),
     !nomIsJake ? (_nomStep==='nominating') : (_nomStep==='responding')
   );
 
-  // ── CONFIRM BUTTON ──
-  const canConfirm = _nomStep === 'responding' && resPicked.length === playersPerPick;
-  const confirmBtn = canConfirm ? `<div style="text-align:center;margin-top:16px">
-    <button onclick="nomConfirmPairing()" style="padding:12px 32px;background:var(--forest-deep);color:var(--cream);border:2px solid var(--gold);border-radius:3px;font-family:'Montserrat',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;cursor:pointer">
-      ✓ Confirm Pairing ${(_nomPairings||[]).length + 1}
-    </button>
-  </div>` : '';
+  // ── LIVE MATCHUP IN PROGRESS ──
+  const inProgressHTML = (nomPicked.length > 0 || resPicked.length > 0) ? `
+    <div style="margin-top:16px;padding:12px 16px;background:var(--forest-deep);border-radius:4px;border:1px solid rgba(201,168,76,0.3)">
+      <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-light);margin-bottom:8px">Pairing ${(_nomPairings||[]).length + 1} — In Progress</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(248,245,238,0.4);margin-bottom:4px">${nomTeam}</div>
+          <div style="font-size:0.9rem;font-weight:700;color:var(--gold)">${nomPicked.length ? nomPicked.map(p=>p.name).join(' & ') : '—'}</div>
+        </div>
+        <div style="font-size:0.75rem;color:rgba(248,245,238,0.3)">vs</div>
+        <div style="text-align:center">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(248,245,238,0.4);margin-bottom:4px">${resTeam}</div>
+          <div style="font-size:0.9rem;font-weight:700;color:${resPicked.length?'rgba(150,200,255,0.9)':'rgba(248,245,238,0.3)'}">${resPicked.length ? resPicked.map(p=>p.name).join(' & ') : '—'}</div>
+        </div>
+      </div>
+      ${_nomStep==='responding' && resPicked.length === playersPerPick ? `
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="nomConfirmPairing()" style="padding:8px 24px;background:var(--gold);color:var(--forest-deep);border:none;border-radius:2px;font-family:'Montserrat',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;cursor:pointer">
+          ✓ Lock In This Pairing
+        </button>
+      </div>` : ''}
+    </div>` : '';
 
-  // ── CONFIRMED PAIRINGS LIST ──
+  // ── CONFIRMED PAIRINGS LOG ──
   const pairingsHTML = (_nomPairings||[]).length ? `
-    <div style="margin-top:24px">
-      <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:10px">Confirmed Pairings</div>
+    <div style="margin-top:20px">
+      <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:8px">Matchup Log</div>
       ${(_nomPairings||[]).map((p, i) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:3px;margin-bottom:6px;font-size:0.78rem">
-          <span style="color:var(--jake);font-weight:600">${[p.jake1,p.jake2].filter(Boolean).join(' & ')}</span>
-          <span style="color:var(--text-light);font-size:0.65rem">vs</span>
-          <span style="color:var(--travis);font-weight:600">${[p.travis1,p.travis2].filter(Boolean).join(' & ')}</span>
-          <button onclick="nomUndoPairing(${i})" style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:0.7rem;padding:2px 6px">✕</button>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:3px;margin-bottom:6px">
+          <span style="font-size:0.78rem;color:var(--jake);font-weight:600">${[p.jake1,p.jake2].filter(Boolean).join(' & ')}</span>
+          <span style="font-size:0.65rem;color:var(--text-light);text-align:center">vs</span>
+          <span style="font-size:0.78rem;color:var(--travis);font-weight:600;text-align:right">${[p.travis1,p.travis2].filter(Boolean).join(' & ')}</span>
+          <button onclick="nomUndoPairing(${i})" style="background:none;border:none;color:var(--text-light);cursor:pointer;font-size:0.7rem;padding:2px 6px" title="Undo">✕</button>
         </div>`).join('')}
     </div>` : '';
 
-  const saveBtn = (_nomPairings||[]).length > 0 ? `
+  const saveBtn = allPaired ? `
     <button id="nom-save-btn" class="nom-complete-btn" onclick="nomSavePairings()">
       🏌️ Lock In Round ${ri + 1} Pairings
     </button>
     <div style="text-align:center;font-size:0.65rem;color:var(--text-light);margin-top:8px;letter-spacing:0.05em">
-      Pairings will be visible in the History tab. Enter scores via Admin after the round.
+      Saves pairings to site. Enter scores via Admin after the round.
     </div>` : '';
 
   document.getElementById('nom-content').innerHTML = `
@@ -1969,7 +2000,7 @@ function renderNominations() {
         <div class="nom-col-body">${travisTiles || '<div class="nom-empty">No players set</div>'}</div>
       </div>
     </div>
-    ${confirmBtn}
+    ${inProgressHTML}
     ${pairingsHTML}
     ${saveBtn}
   </div>`;
@@ -2452,6 +2483,8 @@ async function saveSettings() {
     setSaveBtn('save-settings-btn', 'done');
     localStorage.removeItem(CACHE_KEY);
     renderHome();
+    // Reset nominations state so it reloads fresh next time you open that tab
+    if (yr === DB.liveYear) _nomPairings = null;
   } else {
     setSaveBtn('save-settings-btn', 'reset');
   }
