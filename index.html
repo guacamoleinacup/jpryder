@@ -1385,7 +1385,11 @@ function renderLiveLeaderboard() {
   const wrap = document.getElementById('live-leaderboard-wrap');
   const yr = DB.liveYear;
   const d = DB.years[yr];
-  if (!d || !d.rounds) { wrap.innerHTML = ''; return; }
+  if (!d || !d.rounds) {
+    wrap.innerHTML = '<div id="lb-weather"></div>';
+    renderWeather();
+    return;
+  }
 
   const { jakeTeam, travisTeam, players } = calcScores(d);
   const hasAnyScore = Object.values(players).some(p => p.roundPts.some(r => r.raw !== null));
@@ -1469,6 +1473,12 @@ function renderLiveLeaderboard() {
   renderWeather();
 }
 
+function renderWeatherStandalone() {
+  // Render weather even if no leaderboard data
+  const wrap = document.getElementById('lb-weather-standalone');
+  if (!wrap) return;
+  renderWeather(wrap);
+}
 function toggleLbPlayers(btn) {
   const detail = document.getElementById('lb-player-detail');
   const showing = detail.style.display !== 'none';
