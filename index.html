@@ -1238,7 +1238,7 @@ const CACHE_KEY = 'jpryder_db';
 const CACHE_TTL = 30 * 1000; // 30 seconds
 
 async function loadData() {
-  setLiveStatus(false); // always start grey
+  setLiveStatus('syncing');
 
   // Load from cache immediately for instant render
   try {
@@ -1248,7 +1248,6 @@ async function loadData() {
       applyRecord(data);
       renderHome();
       if (Date.now() - ts < CACHE_TTL) {
-        // Cache fresh — still verify live in background
         fetchFromJSONBin();
         return;
       }
@@ -1256,6 +1255,7 @@ async function loadData() {
   } catch(e) {}
 
   if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') {
+    setLiveStatus(false);
     renderHome();
     return;
   }
@@ -1303,14 +1303,20 @@ function applyRecord(r) {
   }
 }
 
-function setLiveStatus(online) {
+function setLiveStatus(state) {
   const dot = document.getElementById('live-dot');
   const label = document.getElementById('live-label');
-  if (online) {
-    dot.classList.remove('offline');
+  if (state === 'syncing') {
+    dot.className = 'live-dot offline';
+    dot.style.background = '#c9a84c';
+    label.textContent = 'Syncing';
+  } else if (state === true) {
+    dot.className = 'live-dot';
+    dot.style.background = '';
     label.textContent = 'Live';
   } else {
-    dot.classList.add('offline');
+    dot.className = 'live-dot offline';
+    dot.style.background = '';
     label.textContent = 'Offline';
   }
 }
