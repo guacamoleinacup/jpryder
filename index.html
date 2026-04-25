@@ -936,6 +936,11 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
     <div class="hero-title">JP <span>Ryder</span> Cup</div>
     <div class="hero-sub">Wisconsin · Friends · Golf · Glory</div>
     <div class="hero-divider"></div>
+    <div class="next-event" id="next-event">
+      <div class="next-label">Next Event</div>
+      <div class="next-title" id="next-title">4th Annual JP Ryder Cup</div>
+      <div class="next-details" id="next-details">Date & Location TBD · 2026</div>
+    </div>
     <div class="series-board" id="series-board">
       <div class="series-side jake">
         <div class="series-captain">Captain</div>
@@ -955,11 +960,6 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       </div>
     </div>
     <div id="live-leaderboard-wrap"></div>
-    <div class="next-event" id="next-event">
-      <div class="next-label">Next Event</div>
-      <div class="next-title" id="next-title">4th Annual JP Ryder Cup</div>
-      <div class="next-details" id="next-details">Date & Location TBD · 2026</div>
-    </div>
   </div>
 </div>
 
@@ -1054,6 +1054,7 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <div id="admin-matchups-wrap"></div>
       <div class="modal-btns" style="margin-top:16px">
         <button id="save-live-btn" class="btn-primary" onclick="saveLive()">Save & Publish</button>
+        <button class="btn-secondary" onclick="clearRoundData()">Clear Round</button>
         <button class="btn-secondary" onclick="closeModal('modal-admin')">Close</button>
       </div>
     </div>
@@ -1093,6 +1094,11 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
       <div class="modal-btns" style="margin-top:20px">
         <button id="save-settings-btn" class="btn-primary" onclick="saveSettings()">Save & Publish</button>
         <button class="btn-secondary" onclick="closeModal('modal-admin')">Close</button>
+      </div>
+      <div style="margin-top:12px;text-align:center">
+        <button onclick="resetLiveYear()" style="background:none;border:none;font-size:0.65rem;color:var(--text-light);cursor:pointer;text-decoration:underline;letter-spacing:0.05em">
+          Reset all 2026 data (scores, pairings, players)
+        </button>
       </div>
     </div>
   </div>
@@ -2401,6 +2407,41 @@ function setSaveBtn(id, state) {
     btn.disabled = false;
     btn.innerHTML = 'Save & Publish';
     btn.style.background = '';
+  }
+}
+
+async function resetLiveYear() {
+  if (!confirm('Reset ALL 2026 data? This clears players, scores, pairings and cannot be undone.')) return;
+  const yr = DB.liveYear || '2026';
+  DB.years[yr].jakePlayers = [];
+  DB.years[yr].travisPlayers = [];
+  DB.years[yr].playerPool = [];
+  DB.years[yr].jakeWon = null;
+  DB.years[yr].tsxFactor = null;
+  DB.years[yr].rounds.forEach(r => { r.scores = {}; r.pairings = []; });
+  const ok = await saveData();
+  if (ok) {
+    localStorage.removeItem(CACHE_KEY);
+    showToast('✓ 2026 data reset');
+    loadSettingsPanel();
+    renderHome();
+    if (document.getElementById('sec-history').classList.contains('active')) renderHistory();
+    if (document.getElementById('sec-nominations').classList.contains('active')) { _nomPairings = null; renderNominations(); }
+  }
+}
+
+async function clearRoundData() {
+  if (!confirm(`Clear all scores and pairings for Round ${_adminRound + 1}? This cannot be undone.`)) return;
+  const yr = DB.liveYear || '2026';
+  DB.years[yr].rounds[_adminRound].scores = {};
+  DB.years[yr].rounds[_adminRound].pairings = [];
+  const ok = await saveData();
+  if (ok) {
+    localStorage.removeItem(CACHE_KEY);
+    showToast(`✓ Round ${_adminRound + 1} cleared`);
+    renderAdminMatchups(_adminRound);
+    renderHome();
+    if (document.getElementById('sec-history').classList.contains('active')) renderHistory();
   }
 }
 
