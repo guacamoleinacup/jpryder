@@ -1238,41 +1238,29 @@ const CACHE_KEY = 'jpryder_db';
 const CACHE_TTL = 30 * 1000; // 30 seconds
 
 async function loadData() {
-  // Load from cache immediately for instant render (but keep dot grey until confirmed)
+  setLiveStatus(false); // always start grey
+
+  // Load from cache immediately for instant render
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       const { data, ts } = JSON.parse(cached);
       applyRecord(data);
       renderHome();
-      // If cache is fresh, skip network call but still show grey until confirmed
       if (Date.now() - ts < CACHE_TTL) {
-        // Verify in background without blocking
-        verifyLive();
+        // Cache fresh — still verify live in background
+        fetchFromJSONBin();
         return;
       }
     }
   } catch(e) {}
 
-  // Fetch fresh data
   if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') {
-    setLiveStatus(false);
     renderHome();
     return;
   }
   await fetchFromJSONBin();
   renderHome();
-}
-
-async function verifyLive() {
-  try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: { 'X-Master-Key': API_KEY }
-    });
-    setLiveStatus(res.ok);
-  } catch(e) {
-    setLiveStatus(false);
-  }
 }
 
 async function fetchFromJSONBin() {
@@ -1284,10 +1272,11 @@ async function fetchFromJSONBin() {
     if (json.record) {
       applyRecord(json.record);
       localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.record, ts: Date.now() }));
+      renderHome();
     }
     setLiveStatus(true);
   } catch(e) {
-    console.warn('JSONBin load failed, using cache/defaults');
+    console.warn('JSONBin load failed');
     setLiveStatus(false);
   }
 }
