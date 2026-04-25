@@ -1839,6 +1839,13 @@ function renderNominations() {
     </button>`).join('');
 
   // Status banner
+  const nominatorTeam = s.jakeNominatesFirst ? s.jakeTeam : s.travisTeam;
+  const responderTeam = s.jakeNominatesFirst ? s.travisTeam : s.jakeTeam;
+  const nominatorPicks = s.jakeNominatesFirst ? s.currentJakePick : s.currentTravisPick;
+  const responderPicks = s.jakeNominatesFirst ? s.currentTravisPick : s.currentJakePick;
+  const nominatorColor = s.jakeNominatesFirst ? 'rgba(150,220,180,1)' : 'rgba(240,150,150,1)';
+  const responderColor = s.jakeNominatesFirst ? 'rgba(240,150,150,1)' : 'rgba(150,220,180,1)';
+
   let bannerHTML = '';
   if (allPaired) {
     bannerHTML = `<div class="nom-pick-banner" style="border-color:var(--gold)">
@@ -1846,23 +1853,19 @@ function renderNominations() {
       <div class="nom-pick-name" style="font-size:1.2rem">Round ${s.ri+1} Complete ✓</div>
     </div>`;
   } else if (s.pickingJake) {
-    const nominatorName = s.jakeNominatesFirst ? `${s.jakeTeam} (Jake)` : `${s.travisTeam} (Travis)`;
-    const nominatorColor = s.jakeNominatesFirst ? 'rgba(150,220,180,1)' : 'rgba(240,150,150,1)';
-    const selectedNames = s.jakeNominatesFirst ? s.currentJakePick.map(p=>p.name).join(' & ') : s.currentTravisPick.map(p=>p.name).join(' & ');
+    const selected = nominatorPicks.map(p=>p.name).join(' & ');
     bannerHTML = `<div class="nom-pick-banner">
       <div class="nom-pick-label">Nominating — Pairing ${s.pairings.length + 1}</div>
-      <div class="nom-pick-name" style="color:${nominatorColor}">${nominatorName}</div>
-      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} from your team${selectedNames ? ` · ${selectedNames} selected` : ''}</div>
+      <div class="nom-pick-name" style="color:${nominatorColor}">${nominatorTeam}</div>
+      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} from your team${selected ? ` · ${selected} selected` : ''}</div>
     </div>`;
   } else {
-    const responderName = s.jakeNominatesFirst ? `${s.travisTeam} (Travis)` : `${s.jakeTeam} (Jake)`;
-    const responderColor = s.jakeNominatesFirst ? 'rgba(240,150,150,1)' : 'rgba(150,220,180,1)';
-    const nominatedNames = s.jakeNominatesFirst ? s.currentJakePick.map(p=>p.name).join(' & ') : s.currentTravisPick.map(p=>p.name).join(' & ');
-    const respondingNames = s.jakeNominatesFirst ? s.currentTravisPick.map(p=>p.name).join(' & ') : s.currentJakePick.map(p=>p.name).join(' & ');
-    bannerHTML = `<div class="nom-pick-banner" style="border-color:${s.jakeNominatesFirst?'rgba(220,100,100,0.6)':'rgba(100,200,140,0.6)'}">
-      <div class="nom-pick-label">Responding — Pairing ${s.pairings.length + 1}</div>
-      <div class="nom-pick-name" style="color:${responderColor}">${responderName}</div>
-      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} to face ${nominatedNames}${respondingNames ? ` · ${respondingNames} selected` : ''}</div>
+    const nominated = nominatorPicks.map(p=>p.name).join(' & ');
+    const responding = responderPicks.map(p=>p.name).join(' & ');
+    bannerHTML = `<div class="nom-pick-banner" style="border-color:${responderColor}40">
+      <div class="nom-pick-label">Responding to ${nominated} — Pairing ${s.pairings.length + 1}</div>
+      <div class="nom-pick-name" style="color:${responderColor}">${responderTeam}</div>
+      <div class="nom-pick-num">Select ${s.playersPerSide === 2 ? '2 players' : '1 player'} from your team${responding ? ` · ${responding} selected` : ''}</div>
     </div>`;
   }
 
@@ -1940,11 +1943,11 @@ function renderNominations() {
     <div class="nom-main">
       <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div>
-          <div class="nom-col-title jake-col">${s.jakeTeam} — Jake</div>
+          <div class="nom-col-title jake-col">${s.jakeTeam}</div>
           <div class="nom-col-body">${jakeTiles || '<div class="nom-empty">No players set</div>'}</div>
         </div>
         <div>
-          <div class="nom-col-title travis-col">${s.travisTeam} — Travis</div>
+          <div class="nom-col-title travis-col">${s.travisTeam}</div>
           <div class="nom-col-body">${travisTiles || '<div class="nom-empty">No players set</div>'}</div>
         </div>
       </div>
