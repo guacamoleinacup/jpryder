@@ -2067,6 +2067,7 @@ function openPlayerModal(name) {
   const photoWrap = document.getElementById('pmodal-photo-wrap');
   photoEl.style.display = 'block';
   photoEl.style.opacity = '0';
+  placeholderEl.style.display = 'none';
   photoEl.onerror = () => {
     vi++;
     if (vi < variants.length) {
