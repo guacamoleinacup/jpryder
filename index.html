@@ -2067,13 +2067,6 @@ function openPlayerModal(name) {
   const photoWrap = document.getElementById('pmodal-photo-wrap');
   photoEl.style.display = 'block';
   photoEl.style.opacity = '0';
-  placeholderEl.style.display = 'block';
-  photoEl.onload = () => {
-    placeholderEl.style.display = 'none';
-    photoEl.style.opacity = '1';
-    photoWrap.style.cursor = 'zoom-in';
-    photoWrap.onclick = () => openPhotoLightbox(photoEl.src);
-  };
   photoEl.onerror = () => {
     vi++;
     if (vi < variants.length) {
@@ -2085,11 +2078,13 @@ function openPlayerModal(name) {
       photoWrap.onclick = null;
     }
   };
-  photoEl.src = variants[0];
   photoEl.onload = () => {
+    placeholderEl.style.display = 'none';
+    photoEl.style.opacity = '1';
     photoWrap.style.cursor = 'zoom-in';
     photoWrap.onclick = () => openPhotoLightbox(photoEl.src);
   };
+  photoEl.src = variants[0];
 
   // Check if player has won TS X Factor in any year
   const tsxYears = [];
