@@ -1810,11 +1810,49 @@ function buildYearCard(yr) {
         .filter(([,v]) => v.side==='travis' && v.roundPts[ri] && v.roundPts[ri].raw !== null)
         .sort((a,b) => b[1].roundPts[ri].pts - a[1].roundPts[ri].pts);
 
-      const maxRows = Math.max(jakePRows.length, travisPRows.length);
-
+      const pairings = r.pairings || [];
       let playerTable = '';
-      if (maxRows > 0) {
-        // Header row
+
+      if (maxRows > 0 && pairings.length > 0) {
+        // Paired view — show each matchup with scores side by side
+        const isTeamRound = mult === 0.5;
+        playerTable = `<div style="margin-top:10px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--cream-dark)">
+            <div style="padding:5px 10px;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--jake);border-right:1px solid var(--border)">${d.jakeTeam}</div>
+            <div style="padding:5px 10px;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--travis)">${d.travisTeam}</div>
+          </div>
+          ${pairings.map(pair => {
+            const jNames = [pair.jake1, pair.jake2].filter(Boolean);
+            const tNames = [pair.travis1, pair.travis2].filter(Boolean);
+            const jRaw = scores[jNames[0]] !== undefined ? Number(scores[jNames[0]]) : null;
+            const tRaw = scores[tNames[0]] !== undefined ? Number(scores[tNames[0]]) : null;
+            const jPts = jRaw !== null ? jRaw * mult : null;
+            const tPts = tRaw !== null ? tRaw * mult : null;
+            const jWinPair = jRaw !== null && tRaw !== null && jRaw > tRaw;
+            const tWinPair = jRaw !== null && tRaw !== null && tRaw > jRaw;
+            const nameBtn = n => `<button class="player-name-btn" onclick="openPlayerModal('${n.replace(/'/g,"\\'")}') " style="font-size:0.75rem">${n}</button>`;
+            return `<div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--cream-dark)">
+              <div style="padding:7px 10px;border-right:1px solid var(--border)">
+                <div style="font-size:0.75rem;color:var(--text-mid);margin-bottom:${jRaw!==null?'4px':'0'}">${jNames.map(nameBtn).join(' & ')}</div>
+                ${jRaw !== null ? `<div style="display:flex;align-items:baseline;gap:5px">
+                  <span style="font-size:0.85rem;font-weight:700;color:${jWinPair?'var(--jake)':'var(--text-mid)'}">${jRaw}</span>
+                  <span style="font-size:0.62rem;color:var(--text-light)">(${fmt(jPts)}pts)</span>
+                  ${jWinPair ? '<span style="font-size:0.6rem;color:var(--jake);font-weight:700">WIN</span>' : tWinPair ? '<span style="font-size:0.6rem;color:var(--text-light)">LOSS</span>' : '<span style="font-size:0.6rem;color:var(--text-light)">HALVED</span>'}
+                </div>` : ''}
+              </div>
+              <div style="padding:7px 10px">
+                <div style="font-size:0.75rem;color:var(--text-mid);margin-bottom:${tRaw!==null?'4px':'0'}">${tNames.map(nameBtn).join(' & ')}</div>
+                ${tRaw !== null ? `<div style="display:flex;align-items:baseline;gap:5px">
+                  <span style="font-size:0.85rem;font-weight:700;color:${tWinPair?'var(--travis)':'var(--text-mid)'}">${tRaw}</span>
+                  <span style="font-size:0.62rem;color:var(--text-light)">(${fmt(tPts)}pts)</span>
+                  ${tWinPair ? '<span style="font-size:0.6rem;color:var(--travis);font-weight:700">WIN</span>' : jWinPair ? '<span style="font-size:0.6rem;color:var(--text-light)">LOSS</span>' : '<span style="font-size:0.6rem;color:var(--text-light)">HALVED</span>'}
+                </div>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      } else if (maxRows > 0) {
+        // No pairings — flat sorted list fallback
         playerTable = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:10px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
           <div style="background:rgba(45,74,62,0.06);padding:5px 10px;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--jake);border-right:1px solid var(--border)">${d.jakeTeam}</div>
           <div style="background:rgba(139,46,46,0.05);padding:5px 10px;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--travis)">${d.travisTeam}</div>
@@ -1833,8 +1871,7 @@ function buildYearCard(yr) {
         </div>`;
       }
 
-      // Show pairings if set but no scores yet
-      const pairings = r.pairings || [];
+      // Show pairings-only table when no scores yet
       let pairingsTable = '';
       if (!hasScore && pairings.length > 0) {
         pairingsTable = `<div style="margin-top:10px;border:1px solid var(--border);border-radius:3px;overflow:hidden">
