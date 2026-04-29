@@ -2741,48 +2741,78 @@ function renderAdminMatchups(ri) {
   const mult = round.multiplier !== undefined ? round.multiplier : (ri < 2 ? 0.5 : 1);
   const scores = round.scores || {};
   const pairings = round.pairings || [];
+  const isTeamRound = mult === 0.5;
   const jakeTeam = d.jakeTeam || "Jake's Team";
   const travisTeam = d.travisTeam || "Travis's Team";
 
-  const scoreInput = (name, side) => `
+  const hint = `<div style="font-size:0.65rem;color:var(--text-light);margin-bottom:12px;padding:8px;background:var(--cream);border-radius:3px;border:1px solid var(--border)">
+    ${isTeamRound
+      ? `Enter holes won per pairing (0–18). Both players on each side share the same score. Site auto-applies ×${mult} for team contribution.`
+      : `Enter each player's raw holes won (0–18). Site auto-applies ×${mult} multiplier.`}
+  </div>`;
+
+  const pairingInput = (id, value) => `
+    <input class="matchup-admin-score" type="number" min="0" max="18" step="0.5"
+      id="${id}" value="${value !== undefined ? value : ''}" placeholder="0–18">
+    <span style="font-size:0.62rem;color:var(--text-light)">×${mult}</span>`;
+
+  const singleInput = (name, side) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
       <button class="player-name-btn" onclick="openPlayerModal('${name.replace(/'/g,"\\'")}') " style="font-size:0.75rem">${name}</button>
       <div style="display:flex;align-items:center;gap:5px">
-        <input class="matchup-admin-score" type="number" min="0" max="18" step="0.5"
-          id="score-${side}-${name.replace(/\s+/g,'_')}"
-          value="${scores[name] !== undefined ? scores[name] : ''}"
-          placeholder="0–18">
-        <span style="font-size:0.62rem;color:var(--text-light)">×${mult}</span>
+        ${pairingInput(`score-${side}-${name.replace(/\s+/g,'_')}`, scores[name])}
       </div>
     </div>`;
 
-  const hint = `<div style="font-size:0.65rem;color:var(--text-light);margin-bottom:12px;padding:8px;background:var(--cream);border-radius:3px;border:1px solid var(--border)">
-    Enter each player's raw holes won (0–18). Site auto-applies ×${mult} multiplier for team total.
-  </div>`;
-
-  // If pairings exist, show matchup-by-matchup layout
   if (pairings.length > 0) {
     const pairingCards = pairings.map((pair, i) => {
       const jakeNames = [pair.jake1, pair.jake2].filter(Boolean);
       const travisNames = [pair.travis1, pair.travis2].filter(Boolean);
-      return `
-        <div style="border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:10px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--cream-dark)">
-            <div style="padding:5px 10px;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--jake);border-right:1px solid var(--border)">${jakeTeam}</div>
-            <div style="padding:5px 10px;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--travis)">${travisTeam}</div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-            <div style="padding:6px 10px;border-right:1px solid var(--border)">
-              ${jakeNames.map(n => scoreInput(n, 'jake')).join('')}
+
+      if (isTeamRound) {
+        // One input per side — both players share the score
+        const jakeVal = scores[jakeNames[0]];
+        const travisVal = scores[travisNames[0]];
+        const jakeId = `pair-${i}-jake`;
+        const travisId = `pair-${i}-travis`;
+        return `
+          <div style="border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:10px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--cream-dark)">
+              <div style="padding:5px 10px;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--jake);border-right:1px solid var(--border)">${jakeTeam}</div>
+              <div style="padding:5px 10px;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--travis)">${travisTeam}</div>
             </div>
-            <div style="padding:6px 10px">
-              ${travisNames.map(n => scoreInput(n, 'travis')).join('')}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+              <div style="padding:8px 10px;border-right:1px solid var(--border)">
+                <div style="font-size:0.75rem;margin-bottom:6px">${jakeNames.map(n=>`<button class="player-name-btn" onclick="openPlayerModal('${n.replace(/'/g,"\\'")}') " style="font-size:0.75rem">${n}</button>`).join(' & ')}</div>
+                <div style="display:flex;align-items:center;gap:5px">${pairingInput(jakeId, jakeVal)}</div>
+              </div>
+              <div style="padding:8px 10px">
+                <div style="font-size:0.75rem;margin-bottom:6px">${travisNames.map(n=>`<button class="player-name-btn" onclick="openPlayerModal('${n.replace(/'/g,"\\'")}') " style="font-size:0.75rem">${n}</button>`).join(' & ')}</div>
+                <div style="display:flex;align-items:center;gap:5px">${pairingInput(travisId, travisVal)}</div>
+              </div>
             </div>
-          </div>
-        </div>`;
+          </div>`;
+      } else {
+        // Singles — one input per player
+        return `
+          <div style="border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:10px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;background:var(--cream-dark)">
+              <div style="padding:5px 10px;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--jake);border-right:1px solid var(--border)">${jakeTeam}</div>
+              <div style="padding:5px 10px;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--travis)">${travisTeam}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+              <div style="padding:6px 10px;border-right:1px solid var(--border)">
+                ${jakeNames.map(n => singleInput(n, 'jake')).join('')}
+              </div>
+              <div style="padding:6px 10px">
+                ${travisNames.map(n => singleInput(n, 'travis')).join('')}
+              </div>
+            </div>
+          </div>`;
+      }
     }).join('');
 
-    // Any unpaired players (shouldn't happen but just in case)
+    // Unpaired players fallback
     const pairedJake = new Set(pairings.flatMap(p => [p.jake1, p.jake2].filter(Boolean)));
     const pairedTravis = new Set(pairings.flatMap(p => [p.travis1, p.travis2].filter(Boolean)));
     const unpairedJake = (d.jakePlayers||[]).filter(p => !pairedJake.has(p.name));
@@ -2791,17 +2821,17 @@ function renderAdminMatchups(ri) {
       <div style="margin-top:8px;padding:8px 10px;background:var(--cream);border-radius:3px;border:1px solid var(--border)">
         <div style="font-size:0.6rem;color:var(--text-light);margin-bottom:6px">Unpaired players</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>${unpairedJake.map(p => scoreInput(p.name, 'jake')).join('')}</div>
-          <div>${unpairedTravis.map(p => scoreInput(p.name, 'travis')).join('')}</div>
+          <div>${unpairedJake.map(p => singleInput(p.name, 'jake')).join('')}</div>
+          <div>${unpairedTravis.map(p => singleInput(p.name, 'travis')).join('')}</div>
         </div>
       </div>` : '';
 
     wrap.innerHTML = hint + pairingCards + unpairedHTML;
   } else {
-    // No pairings — flat two-column layout
+    // No pairings — flat layout with warning
     const flatInputs = (players, side) => {
       if (!players || players.length === 0) return `<div style="font-size:0.72rem;color:var(--text-light);padding:8px 0">No players set.</div>`;
-      return players.map(p => scoreInput(p.name, side)).join('');
+      return players.map(p => singleInput(p.name, side)).join('');
     };
     wrap.innerHTML = hint + `
       <div style="font-size:0.62rem;color:var(--text-light);margin-bottom:10px;padding:6px 8px;background:#fff8e7;border:1px solid #f0d060;border-radius:3px">
@@ -2819,7 +2849,6 @@ function renderAdminMatchups(ri) {
       </div>`;
   }
 }
-
 function addMatchup(ri) {
   // No longer used — kept for safety
 }
@@ -2882,33 +2911,51 @@ async function saveLive() {
   const d = DB.years[yr];
   const round = d.rounds[_adminRound];
   if (!round.scores) round.scores = {};
-
-  const allPlayers = [
-    ...(d.jakePlayers||[]).map(p => ({...p, side:'jake'})),
-    ...(d.travisPlayers||[]).map(p => ({...p, side:'travis'}))
-  ];
-
-  // Read all current input values
-  const inputVals = {};
-  allPlayers.forEach(p => {
-    const key = `score-${p.side}-${p.name.replace(/\s+/g,'_')}`;
-    const el = document.getElementById(key);
-    if (el && el.value !== '') inputVals[p.name] = parseFloat(el.value);
-  });
-
-  // Validate pairings sum to 18
+  const mult = round.multiplier !== undefined ? round.multiplier : (_adminRound < 2 ? 0.5 : 1);
+  const isTeamRound = mult === 0.5;
   const pairings = round.pairings || [];
   const errors = [];
-  if (pairings.length > 0) {
+  const newScores = {};
+
+  if (isTeamRound && pairings.length > 0) {
+    // Team rounds — read one score per side per pairing, assign to both players
     pairings.forEach((pair, i) => {
-      const names = [pair.jake1, pair.jake2, pair.travis1, pair.travis2].filter(Boolean);
-      const filled = names.filter(n => inputVals[n] !== undefined);
-      if (filled.length === names.length) {
-        const total = names.reduce((s, n) => s + inputVals[n], 0);
+      const jakeNames = [pair.jake1, pair.jake2].filter(Boolean);
+      const travisNames = [pair.travis1, pair.travis2].filter(Boolean);
+      const jakeEl = document.getElementById(`pair-${i}-jake`);
+      const travisEl = document.getElementById(`pair-${i}-travis`);
+      const jakeVal = jakeEl && jakeEl.value !== '' ? parseFloat(jakeEl.value) : null;
+      const travisVal = travisEl && travisEl.value !== '' ? parseFloat(travisEl.value) : null;
+
+      // Validate sum = 18 if both filled
+      if (jakeVal !== null && travisVal !== null) {
+        const total = jakeVal + travisVal;
         if (Math.abs(total - 18) > 0.01) {
-          const pairLabel = [pair.jake1, pair.jake2].filter(Boolean).join(' & ') +
-            ' vs ' + [pair.travis1, pair.travis2].filter(Boolean).join(' & ');
-          errors.push(`Pairing ${i+1} (${pairLabel}) totals ${total} — must equal 18`);
+          const label = jakeNames.join(' & ') + ' vs ' + travisNames.join(' & ');
+          errors.push(`Pairing ${i+1} (${label}) totals ${total} — must equal 18`);
+        }
+      }
+      // Assign same score to both players on each side
+      if (jakeVal !== null) jakeNames.forEach(n => { newScores[n] = jakeVal; });
+      if (travisVal !== null) travisNames.forEach(n => { newScores[n] = travisVal; });
+    });
+  } else {
+    // Singles — one score per player
+    const allPlayers = [
+      ...(d.jakePlayers||[]).map(p => ({...p, side:'jake'})),
+      ...(d.travisPlayers||[]).map(p => ({...p, side:'travis'}))
+    ];
+    allPlayers.forEach(p => {
+      const el = document.getElementById(`score-${p.side}-${p.name.replace(/\s+/g,'_')}`);
+      if (el && el.value !== '') newScores[p.name] = parseFloat(el.value);
+    });
+    // Validate singles pairings sum to 18
+    pairings.forEach((pair, i) => {
+      const jName = pair.jake1, tName = pair.travis1;
+      if (newScores[jName] !== undefined && newScores[tName] !== undefined) {
+        const total = newScores[jName] + newScores[tName];
+        if (Math.abs(total - 18) > 0.01) {
+          errors.push(`Pairing ${i+1} (${jName} vs ${tName}) totals ${total} — must equal 18`);
         }
       }
     });
@@ -2920,12 +2967,7 @@ async function saveLive() {
   }
 
   setSaveBtn('save-live-btn', 'saving');
-
-  allPlayers.forEach(p => {
-    if (inputVals[p.name] !== undefined) {
-      round.scores[p.name] = inputVals[p.name];
-    }
-  });
+  round.scores = newScores;
 
   const ok = await saveData();
   if (ok) {
