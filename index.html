@@ -1811,6 +1811,7 @@ function buildYearCard(yr) {
         .sort((a,b) => b[1].roundPts[ri].pts - a[1].roundPts[ri].pts);
 
       const pairings = r.pairings || [];
+      const maxRows = Math.max(jakePRows.length, travisPRows.length);
       let playerTable = '';
 
       if (maxRows > 0 && pairings.length > 0) {
