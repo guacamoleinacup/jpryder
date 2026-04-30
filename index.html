@@ -1414,25 +1414,28 @@ function renderLiveLeaderboard() {
   }).join('');
 
   // Individual leaderboard — sort by total pts desc
-  const jakePlayers = Object.entries(players).filter(([,v]) => v.side==='jake').sort((a,b) => b[1].totalPts - a[1].totalPts);
-  const travisPlayers = Object.entries(players).filter(([,v]) => v.side==='travis').sort((a,b) => b[1].totalPts - a[1].totalPts);
+  // Individual leaderboard — merge both teams, sort by total pts desc
+  const allPlayersSorted = Object.entries(players)
+    .filter(([,v]) => v.roundPts.some(r => r.raw !== null))
+    .sort((a,b) => b[1].totalPts - a[1].totalPts);
 
-  const playerRows = (arr) => arr.map(([name, p]) => {
-    if (p.roundPts.every(r => r.raw === null)) return '';
+  const allPlayerHTML = allPlayersSorted.map(([name, p], i) => {
     const rawTotal = p.roundPts.reduce((sum, r) => sum + (r.raw !== null ? r.raw : 0), 0);
-    const contrib = p.totalPts;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.72rem">
-      <button class="player-name-btn" onclick="openPlayerModal('${name.replace(/'/g,"\\'")}') " style="color:rgba(248,245,238,0.7);text-align:left">${name}</button>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="color:rgba(248,245,238,0.4);font-size:0.65rem">${rawTotal} raw</span>
-        <span style="font-weight:700;color:var(--gold-light);min-width:28px;text-align:right">${fmt(contrib)} pts</span>
+    const isJake = p.side === 'jake';
+    const teamColor = isJake ? 'var(--jake)' : 'var(--travis)';
+    const teamLabel = isJake ? d.jakeTeam : d.travisTeam;
+    return `<div style="display:grid;grid-template-columns:20px 1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <span style="font-size:0.65rem;color:rgba(248,245,238,0.35);text-align:center">${i+1}</span>
+      <div>
+        <button class="player-name-btn" onclick="openPlayerModal('${name.replace(/'/g,"\\'")}') " style="color:rgba(248,245,238,0.85);text-align:left;font-size:0.75rem">${name}</button>
+        <div style="font-size:0.55rem;color:${teamColor};opacity:0.7;letter-spacing:0.08em;text-transform:uppercase">${teamLabel}</div>
       </div>
+      <span style="color:rgba(248,245,238,0.35);font-size:0.62rem;text-align:right">${rawTotal} raw</span>
+      <span style="font-weight:700;color:var(--gold-light);font-size:0.75rem;min-width:44px;text-align:right">${fmt(p.totalPts)} pts</span>
     </div>`;
-  }).filter(Boolean).join('');
+  }).join('');
 
-  const jakePlayerHTML = playerRows(jakePlayers);
-  const travisPlayerHTML = playerRows(travisPlayers);
-  const hasPlayerScores = hasAnyScore; // show as soon as any score exists
+  const hasPlayerScores = hasAnyScore;
 
   const statusText = hasAnyScore
     ? (tied ? 'All Square' : `${jakeLeading ? d.jakeTeam : d.travisTeam} leads`)
@@ -1457,17 +1460,8 @@ function renderLiveLeaderboard() {
     </div>
     <div class="lb-rounds">${roundRows}</div>
     ${hasPlayerScores ? `
-    <div id="lb-player-detail" style="display:none">
-      <div class="lb-matchups" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div>
-          <div class="lb-matchups-title">${d.jakeTeam}</div>
-          ${jakePlayerHTML || '<div style="font-size:0.7rem;color:rgba(248,245,238,0.3)">No scores yet</div>'}
-        </div>
-        <div>
-          <div class="lb-matchups-title">${d.travisTeam}</div>
-          ${travisPlayerHTML || '<div style="font-size:0.7rem;color:rgba(248,245,238,0.3)">No scores yet</div>'}
-        </div>
-      </div>
+    <div id="lb-player-detail" style="display:none;padding:0 20px 12px">
+      ${allPlayerHTML || '<div style="font-size:0.7rem;color:rgba(248,245,238,0.3)">No scores yet</div>'}
     </div>
     <button class="lb-expand-btn" onclick="toggleLbPlayers(this)">▼ Individual Scores</button>` : ''}
     <div id="lb-weather"></div>
