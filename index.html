@@ -1424,11 +1424,15 @@ function renderLiveLeaderboard() {
     const isJake = p.side === 'jake';
     const teamColor = isJake ? 'var(--jake)' : 'var(--travis)';
     const teamLabel = isJake ? d.jakeTeam : d.travisTeam;
-    return `<div style="display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
-      <span style="font-size:0.65rem;color:rgba(248,245,238,0.35);text-align:center">${i+1}</span>
-      <div>
-        <button class="player-name-btn" onclick="openPlayerModal('${name.replace(/'/g,"\\'")}') " style="color:rgba(248,245,238,0.9);text-align:left;font-size:0.78rem">${name}</button>
-        <div style="font-size:0.58rem;color:${teamColor};font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-top:1px">${teamLabel}</div>
+    const pillLabel = teamLabel.replace(/^Team\s+/i, '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+    const pillBorder = isJake ? 'rgba(100,200,140,0.4)' : 'rgba(220,100,100,0.4)';
+    const pillText = isJake ? 'rgba(140,220,170,1)' : 'rgba(240,140,140,1)';
+    const pill = `<span style="font-size:0.52rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${pillText};background:${pillColor};border:1px solid ${pillBorder};border-radius:20px;padding:1px 6px;margin-left:6px;white-space:nowrap">${pillLabel}</span>`;
+    return `<div style="display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <span style="font-size:0.65rem;color:rgba(248,245,238,0.35);text-align:right">${i+1}</span>
+      <div style="display:flex;align-items:center;min-width:0">
+        <button class="player-name-btn" onclick="openPlayerModal('${name.replace(/'/g,"\\'")}') " style="color:rgba(248,245,238,0.9);font-size:0.78rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</button>
+        ${pill}
       </div>
       <div style="text-align:right;white-space:nowrap">
         <span style="color:rgba(248,245,238,0.35);font-size:0.62rem">${rawTotal} raw · </span>
