@@ -1425,6 +1425,7 @@ function renderLiveLeaderboard() {
     const teamColor = isJake ? 'var(--jake)' : 'var(--travis)';
     const teamLabel = isJake ? d.jakeTeam : d.travisTeam;
     const pillLabel = teamLabel.replace(/^Team\s+/i, '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+    const pillColor = isJake ? 'rgba(100,200,140,0.15)' : 'rgba(220,100,100,0.15)';
     const pillBorder = isJake ? 'rgba(100,200,140,0.4)' : 'rgba(220,100,100,0.4)';
     const pillText = isJake ? 'rgba(140,220,170,1)' : 'rgba(240,140,140,1)';
     const pill = `<span style="font-size:0.52rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${pillText};background:${pillColor};border:1px solid ${pillBorder};border-radius:20px;padding:1px 6px;margin-left:6px;white-space:nowrap">${pillLabel}</span>`;
