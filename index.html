@@ -1108,9 +1108,10 @@ nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ── REPLACE WITH YOUR JSONBIN API KEY ──
-const BIN_ID = '69eb8eb236566621a8e9a97c';
-const API_KEY = '$2a$10$bi8u/5Db8qyxEsv/QYyvuu03trS2sjASrsf0TXa.m3CIfARihdZdS';
+// ── CONFIG ──
+const SUPA_URL = 'https://kqzbdzmzuyibphefbnrn.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxemJkem16dXlpYnBoZWZibnJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Njk0NjMsImV4cCI6MjA5NTU0NTQ2M30.En_fofTXv9mSRblfstfmq-ShwOzhM7E2oALlvOSXJrA';
+const SUPA_HEADERS = { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
 const ADMIN_PASS = 'jpbod123!';
 const GITHUB_BASE = 'https://raw.githubusercontent.com/guacamoleinacup/jpryder/main/images/';
 
@@ -1241,8 +1242,6 @@ const CACHE_TTL = 30 * 1000; // 30 seconds
 
 async function loadData() {
   setLiveStatus('syncing');
-
-  // Load from cache immediately for instant render
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
@@ -1250,36 +1249,30 @@ async function loadData() {
       applyRecord(data);
       renderHome();
       if (Date.now() - ts < CACHE_TTL) {
-        fetchFromJSONBin();
+        fetchFromSupabase();
         return;
       }
     }
   } catch(e) {}
-
-  if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') {
-    setLiveStatus(false);
-    renderHome();
-    return;
-  }
-  await fetchFromJSONBin();
+  await fetchFromSupabase();
   renderHome();
 }
 
-async function fetchFromJSONBin() {
+async function fetchFromSupabase() {
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: { 'X-Master-Key': API_KEY }
+    const res = await fetch(`${SUPA_URL}/rest/v1/jpryder?id=eq.gamedata&select=data`, {
+      headers: SUPA_HEADERS
     });
     const json = await res.json();
-    if (json.record) {
-      applyRecord(json.record);
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.record, ts: Date.now() }));
+    if (json && json[0] && json[0].data) {
+      applyRecord(json[0].data);
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json[0].data, ts: Date.now() }));
       renderHome();
     }
     setLiveStatus(true);
     if (document.getElementById('sec-history').classList.contains('active')) renderHistory();
   } catch(e) {
-    console.warn('JSONBin load failed');
+    console.warn('Supabase load failed:', e);
     setLiveStatus(false);
   }
 }
@@ -1325,15 +1318,20 @@ function setLiveStatus(state) {
 }
 
 async function saveData() {
-  if (API_KEY === 'YOUR_JSONBIN_API_KEY_HERE') { showToast('Add your API key first!'); return false; }
   try {
-    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-      body: JSON.stringify(DB)
+    const res = await fetch(`${SUPA_URL}/rest/v1/jpryder?id=eq.gamedata`, {
+      method: 'PATCH',
+      headers: { ...SUPA_HEADERS, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ data: DB, updated_at: new Date().toISOString() })
     });
+    if (!res.ok) throw new Error('Save failed: ' + res.status);
+    localStorage.removeItem(CACHE_KEY);
     return true;
-  } catch(e) { showToast('Save failed — check connection'); return false; }
+  } catch(e) {
+    console.error('Supabase save failed:', e);
+    showToast('Save failed — check connection');
+    return false;
+  }
 }
 
 // ── RENDER HOME ──
