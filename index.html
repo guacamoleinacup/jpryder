@@ -1214,11 +1214,6 @@ const DEFAULT_DATA = {
         {name:'Christian Nilsen',hdcp:15},{name:'William Braxton',hdcp:19},{name:'Travis Raffel',hdcp:19}
       ]
     }
-  },
-  gallery: {
-    '2025': ['2025_1.jpg','2025_2.jpg','2025_3.jpg'],
-    '2024': ['2024_1.jpg','2024_2.jpg','2024_3.jpg'],
-    '2023': ['2023_1.jpg','2023_2.jpg','2023_3.jpg']
   }
 };
 
@@ -1475,12 +1470,6 @@ function renderLiveLeaderboard() {
   renderWeather();
 }
 
-function renderWeatherStandalone() {
-  // Render weather even if no leaderboard data
-  const wrap = document.getElementById('lb-weather-standalone');
-  if (!wrap) return;
-  renderWeather(wrap);
-}
 function toggleLbPlayers(btn) {
   const detail = document.getElementById('lb-player-detail');
   const showing = detail.style.display !== 'none';
@@ -1510,12 +1499,11 @@ async function fetchWeather() {
       labels = ['Fri Jun 26', 'Sat Jun 27', 'Sun Jun 28'];
     } else {
       // Too far out — show current 3-day forecast instead
-      const fmt = d => d.toISOString().split('T')[0];
-      const d0 = new Date(); d0.setDate(d0.getDate());
-      const d1 = new Date(); d1.setDate(d1.getDate()+1);
+      const isoDate = d => d.toISOString().split('T')[0];
+      const d0 = new Date();
       const d2 = new Date(); d2.setDate(d2.getDate()+2);
-      startDate = fmt(d0);
-      endDate = fmt(d2);
+      startDate = isoDate(d0);
+      endDate = isoDate(d2);
       labels = ['Today', 'Tomorrow', d2.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})];
     }
 
@@ -2561,9 +2549,9 @@ async function nomSavePairings() {
     showToast('✓ Round ' + (ri + 1) + ' pairings saved!');
     btn.textContent = '✓ Saved!';
     btn.style.background = '#2d7a4a';
-    setTimeout(() => { btn.style.background = ''; btn.textContent = '🏌️ Save Round ' + (ri+1) + ' Pairings'; btn.disabled = false; }, 2000);
+    setTimeout(() => { btn.style.background = ''; btn.textContent = '🏌️ Lock In Round ' + (ri+1) + ' Pairings'; btn.disabled = false; }, 2000);
   } else {
-    btn.textContent = '🏌️ Save Round ' + (ri + 1) + ' Pairings';
+    btn.textContent = '🏌️ Lock In Round ' + (ri + 1) + ' Pairings';
     btn.disabled = false;
     showToast('Save failed — check connection');
   }
@@ -2571,9 +2559,10 @@ async function nomSavePairings() {
 
 
 // ── RENDER GALLERY ──
-// Images follow naming convention: 2023-01.jpg, 2023-02.jpg, etc.
-// The site probes sequentially and stops when an image fails to load.
-const MAX_GALLERY_PROBE = 30; // max images to attempt per year
+// Naming convention: "YEAR - N.jpeg" (e.g. "2023 - 1.jpeg"), stored under gallery/YEAR/.
+// We probe slot 1..MAX for each year and keep whatever loads.
+const MAX_GALLERY_PROBE = 24;  // max images to attempt per year
+const _galleryCache = {};      // session cache of resolved photo URLs per year (avoids re-probing)
 
 function renderGallery() {
   const el = document.getElementById('gallery-content');
@@ -2601,18 +2590,21 @@ function renderGallery() {
 
 function loadGalleryYear(yr) {
   const grid = document.getElementById('gallery-grid-' + yr);
+  if (!grid) return;
 
-  // Try a single variant for each slot in parallel, resolve first match
+  // Serve from session cache when available — avoids re-probing GitHub on every Gallery visit.
+  // Empty years are NOT cached, so photos added mid-event still show up on the next visit.
+  if (_galleryCache[yr] && _galleryCache[yr].length) {
+    renderGalleryGrid(yr, grid, _galleryCache[yr]);
+    return;
+  }
+
+  // Probe each slot, trying the canonical "YEAR - N.jpeg" filename plus light fallbacks.
   function tryVariants(n) {
     const padded = String(n).padStart(2, '0');
     const variants = [
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpeg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpeg`,
-      `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpg`,
-      `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpg`,
-      `${GITHUB_BASE}gallery/${yr}/${yr}-${padded}.jpeg`,
-      `${GITHUB_BASE}gallery/${yr}/${yr}-${n}.jpeg`,
-      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpg`,
     ];
     return new Promise(resolve => {
@@ -2628,48 +2620,55 @@ function loadGalleryYear(yr) {
     });
   }
 
-  // Probe all slots in parallel up to MAX, filter nulls
+  // Probe all slots in parallel up to MAX; Promise.all preserves order, so we just drop nulls.
   const probes = Array.from({length: MAX_GALLERY_PROBE}, (_, i) => tryVariants(i + 1));
   Promise.all(probes).then(results => {
     const urls = results.filter(Boolean);
-    if (urls.length === 0) {
-      grid.innerHTML = `<div class="gallery-item"><div class="gallery-placeholder"><span>📷</span><p>Photos coming soon</p></div></div>`.repeat(3);
-      return;
-    }
-
-    // urls is already in order (Promise.all preserves order), just filter nulls
-    const section = document.getElementById('gallery-yr-' + yr);
-    section._photoUrls = urls;
-
-    const items = urls.map((url, idx) =>
-      `<div class="gallery-item" onclick="openLightbox('${yr}',${idx})">
-        <img src="${url}" alt="photo" style="opacity:0;transition:opacity 0.3s"
-          onload="this.style.opacity=1"
-          onerror="this.style.display='none';this.parentElement.style.cursor='default';this.parentElement.onclick=null;this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>Unavailable</p></div>'">
-      </div>`
-    ).join('');
-
-    const needsCollapse = urls.length > 8;
-    grid.className = 'gallery-grid' + (needsCollapse ? ' collapsed' : '');
-    grid.innerHTML = items;
-
-    const existing = document.getElementById('expand-btn-' + yr);
-    if (existing) existing.remove();
-    if (needsCollapse) {
-      const btn = document.createElement('button');
-      btn.className = 'gallery-expand-btn';
-      btn.id = 'expand-btn-' + yr;
-      btn.innerHTML = `<span class="gallery-expand-arrow">▼</span> Show all ${urls.length} photos`;
-      btn.onclick = () => {
-        const collapsed = grid.classList.toggle('collapsed');
-        btn.classList.toggle('expanded', !collapsed);
-        btn.innerHTML = collapsed
-          ? `<span class="gallery-expand-arrow">▼</span> Show all ${urls.length} photos`
-          : `<span class="gallery-expand-arrow">▼</span> Show less`;
-      };
-      grid.parentElement.appendChild(btn);
-    }
+    _galleryCache[yr] = urls;
+    renderGalleryGrid(yr, grid, urls);
   });
+}
+
+function renderGalleryGrid(yr, grid, urls) {
+  if (!grid) return;
+  if (!urls || urls.length === 0) {
+    grid.innerHTML = `<div class="gallery-item"><div class="gallery-placeholder"><span>📷</span><p>Photos coming soon</p></div></div>`.repeat(3);
+    const stale = document.getElementById('expand-btn-' + yr);
+    if (stale) stale.remove();
+    return;
+  }
+
+  const section = document.getElementById('gallery-yr-' + yr);
+  if (section) section._photoUrls = urls;
+
+  const items = urls.map((url, idx) =>
+    `<div class="gallery-item" onclick="openLightbox('${yr}',${idx})">
+      <img src="${url}" alt="photo" style="opacity:0;transition:opacity 0.3s"
+        onload="this.style.opacity=1"
+        onerror="this.style.display='none';this.parentElement.style.cursor='default';this.parentElement.onclick=null;this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>Unavailable</p></div>'">
+    </div>`
+  ).join('');
+
+  const needsCollapse = urls.length > 8;
+  grid.className = 'gallery-grid' + (needsCollapse ? ' collapsed' : '');
+  grid.innerHTML = items;
+
+  const existing = document.getElementById('expand-btn-' + yr);
+  if (existing) existing.remove();
+  if (needsCollapse) {
+    const btn = document.createElement('button');
+    btn.className = 'gallery-expand-btn';
+    btn.id = 'expand-btn-' + yr;
+    btn.innerHTML = `<span class="gallery-expand-arrow">▼</span> Show all ${urls.length} photos`;
+    btn.onclick = () => {
+      const collapsed = grid.classList.toggle('collapsed');
+      btn.classList.toggle('expanded', !collapsed);
+      btn.innerHTML = collapsed
+        ? `<span class="gallery-expand-arrow">▼</span> Show all ${urls.length} photos`
+        : `<span class="gallery-expand-arrow">▼</span> Show less`;
+    };
+    grid.parentElement.appendChild(btn);
+  }
 }
 
 // ── LIGHTBOX ──
@@ -2885,9 +2884,6 @@ function renderAdminMatchups(ri) {
         </div>
       </div>`;
   }
-}
-function addMatchup(ri) {
-  // No longer used — kept for safety
 }
 
 function setSaveBtn(id, state) {
