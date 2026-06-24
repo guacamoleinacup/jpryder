@@ -2674,9 +2674,10 @@ function renderGalleryGrid(yr, grid, urls) {
 // ── LIGHTBOX ──
 let _lbUrls = [];
 let _lbIdx = 0;
+let _lbFromPlayer = false;
 
 function openPhotoLightbox(src) {
-  closeModal('modal-player');
+  _lbFromPlayer = true;
   _lbUrls = [src];
   _lbIdx = 0;
   showLightboxImage();
@@ -2684,6 +2685,7 @@ function openPhotoLightbox(src) {
 }
 
 function openLightbox(yr, idx) {
+  _lbFromPlayer = false;
   const section = document.getElementById('gallery-yr-' + yr);
   _lbUrls = section._photoUrls || [];
   _lbIdx = idx;
@@ -2718,6 +2720,10 @@ function closeLightbox() {
   img.src = '';
   img.style.opacity = '1';
   document.getElementById('lightbox').classList.remove('open');
+  if (_lbFromPlayer) {
+    _lbFromPlayer = false;
+    document.getElementById('modal-player').classList.add('open');
+  }
 }
 document.getElementById('lightbox').addEventListener('click', e => {
   if (e.target === document.getElementById('lightbox')) closeLightbox();
