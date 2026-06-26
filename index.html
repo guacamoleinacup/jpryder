@@ -2192,9 +2192,19 @@ let _nomPairings = null; // null = not started, load from DB on init
 let _nomStep = 'nominating';
 let _nomPick = { nominator: [], responder: [] };
 
-// Who nominates first per round: 0=Jake, 1=Travis, 2=Jake
-function nominatorSide(ri) { return ri === 1 ? 'travis' : 'jake'; }
-function responderSide(ri) { return ri === 1 ? 'jake' : 'travis'; }
+// Who nominates the FIRST pairing each round: R1 Jake, R2 Travis, R3 Jake.
+function roundFirstNominator(ri) { return ri === 1 ? 'travis' : 'jake'; }
+// Within a round the nominator snakes per pairing: A, B, B, A, A, B...
+// i.e. the team that nominated pairing N responds to pairing N+1.
+// pi defaults to the pairing currently being built (count of confirmed pairings).
+function nominatorSide(ri, pi) {
+  if (pi === undefined) pi = (_nomPairings || []).length;
+  const base = roundFirstNominator(ri);
+  return (pi % 2 === 0) ? base : (base === 'jake' ? 'travis' : 'jake');
+}
+function responderSide(ri, pi) {
+  return nominatorSide(ri, pi) === 'jake' ? 'travis' : 'jake';
+}
 
 function nomCheckPw() {
   const val = document.getElementById('nom-pw-input').value;
