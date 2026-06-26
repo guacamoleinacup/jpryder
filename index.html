@@ -2560,6 +2560,8 @@ async function nomSavePairings() {
 
 // ── RENDER GALLERY ──
 // Naming convention: "YEAR - N.jpeg" (e.g. "2023 - 1.jpeg"), stored under gallery/YEAR/.
+// Also supports .jpg and .heic (iPhone uploads). Safari renders HEIC natively;
+// other browsers show a download link fallback.
 // We probe slot 1..MAX for each year and keep whatever loads.
 const MAX_GALLERY_PROBE = 24;  // max images to attempt per year
 const _galleryCache = {};      // session cache of resolved photo URLs per year (avoids re-probing)
@@ -2600,12 +2602,15 @@ function loadGalleryYear(yr) {
   }
 
   // Probe each slot, trying the canonical "YEAR - N.jpeg" filename plus light fallbacks.
+  // .heic is included for iPhone uploads; Safari renders natively, others show a download fallback.
   function tryVariants(n) {
     const padded = String(n).padStart(2, '0');
     const variants = [
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpeg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.jpeg`,
       `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.jpg`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${n}.heic`,
+      `${GITHUB_BASE}gallery/${yr}/${yr}%20-%20${padded}.heic`,
     ];
     return new Promise(resolve => {
       let vi = 0;
@@ -2641,13 +2646,17 @@ function renderGalleryGrid(yr, grid, urls) {
   const section = document.getElementById('gallery-yr-' + yr);
   if (section) section._photoUrls = urls;
 
-  const items = urls.map((url, idx) =>
-    `<div class="gallery-item" onclick="openLightbox('${yr}',${idx})">
+  const items = urls.map((url, idx) => {
+    const isHeic = url.toLowerCase().endsWith('.heic');
+    const heicFallback = isHeic
+      ? `this.parentElement.style.cursor='default';this.parentElement.onclick=null;this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>HEIC — <a href=\\'${url}\\' download style=\\'color:var(--gold)\\'>Download</a></p></div>';`
+      : `this.style.display='none';this.parentElement.style.cursor='default';this.parentElement.onclick=null;this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>Unavailable</p></div>';`;
+    return `<div class="gallery-item" onclick="openLightbox('${yr}',${idx})">
       <img src="${url}" alt="photo" style="opacity:0;transition:opacity 0.3s"
         onload="this.style.opacity=1"
-        onerror="this.style.display='none';this.parentElement.style.cursor='default';this.parentElement.onclick=null;this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><span>📷</span><p>Unavailable</p></div>'">
-    </div>`
-  ).join('');
+        onerror="${heicFallback}">
+    </div>`;
+  }).join('');
 
   const needsCollapse = urls.length > 8;
   grid.className = 'gallery-grid' + (needsCollapse ? ' collapsed' : '');
@@ -2695,9 +2704,25 @@ function openLightbox(yr, idx) {
 
 function showLightboxImage() {
   const img = document.getElementById('lightbox-img');
+  const heicNote = document.getElementById('lightbox-heic-note');
   img.style.opacity = '0';
+  if (heicNote) heicNote.remove();
   img.onload = () => { img.style.opacity = '1'; img.style.transition = 'opacity 0.25s'; };
-  img.onerror = () => { img.style.opacity = '0.3'; };
+  img.onerror = () => {
+    const url = _lbUrls[_lbIdx];
+    if (url && url.toLowerCase().endsWith('.heic')) {
+      img.style.opacity = '0';
+      const note = document.createElement('div');
+      note.id = 'lightbox-heic-note';
+      note.style.cssText = 'color:#f8f5ee;text-align:center;padding:40px 20px;';
+      note.innerHTML = `<div style="font-size:3rem;margin-bottom:12px">📷</div>
+        <p style="margin:0 0 8px;opacity:0.7">HEIC format — not supported in this browser</p>
+        <a href="${url}" download style="color:var(--gold);font-weight:600">⬇ Download photo</a>`;
+      img.parentElement.appendChild(note);
+    } else {
+      img.style.opacity = '0.3';
+    }
+  };
   // Append cache-buster to force Safari to re-fetch cleanly
   const url = _lbUrls[_lbIdx];
   img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -2719,6 +2744,8 @@ function closeLightbox() {
   const img = document.getElementById('lightbox-img');
   img.src = '';
   img.style.opacity = '1';
+  const heicNote = document.getElementById('lightbox-heic-note');
+  if (heicNote) heicNote.remove();
   document.getElementById('lightbox').classList.remove('open');
   if (_lbFromPlayer) {
     _lbFromPlayer = false;
