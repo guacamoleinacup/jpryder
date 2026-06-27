@@ -2192,8 +2192,8 @@ let _nomPairings = null; // null = not started, load from DB on init
 let _nomStep = 'nominating';
 let _nomPick = { nominator: [], responder: [] };
 
-// Who nominates the FIRST pairing each round: R1 Jake, R2 Travis, R3 Jake.
-function roundFirstNominator(ri) { return ri === 1 ? 'travis' : 'jake'; }
+// Who nominates the FIRST pairing each round: R1 Jake, R2 Travis, R3 Travis.
+function roundFirstNominator(ri) { return ri === 0 ? 'jake' : 'travis'; }
 // Within a round the nominator snakes per pairing: A, B, B, A, A, B...
 // i.e. the team that nominated pairing N responds to pairing N+1.
 // pi defaults to the pairing currently being built (count of confirmed pairings).
@@ -2291,7 +2291,7 @@ function renderNominations() {
 
   // Round timing labels
   const roundTiming = ['Thursday Night', 'Friday Lunch', 'Friday Night'];
-  const roundFirstPick = ['Jake nominates first', 'Travis nominates first', 'Jake nominates first'];
+  const roundFirstPick = ['Jake nominates first', 'Travis nominates first', 'Travis nominates first'];
 
   // ── ROUND TABS ──
   const roundTabs = (d.rounds || []).map((r, i) => `
